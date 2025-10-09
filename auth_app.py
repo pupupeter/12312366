@@ -1,16 +1,72 @@
+
+
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from pymongo import MongoClient
 import hashlib
 import os
 from datetime import datetime
+import subprocess
+import atexit
+import signal
+import sys
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # 用於 session 加密
 
 # MongoDB 連接
 client = MongoClient('mongodb://localhost:27017/')
-db = client['帳號密碼']  # 資料庫名稱
+db = client['local']  # 資料庫名稱
 collection = db['帳號密碼']  # 集合名稱
+
+# 全局變量存儲 web_app 子進程
+web_app_process = None
+
+# 啟動 web_app.py
+def start_web_app():
+    global web_app_process
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        web_app_path = os.path.join(script_dir, 'web_app.py')
+
+        web_app_process = subprocess.Popen(
+            [sys.executable, web_app_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=script_dir
+        )
+
+        # 等待一下讓服務啟動
+        import time
+        time.sleep(2)
+
+        # 檢查進程是否還在運行
+        if web_app_process.poll() is None:
+            print("✓ 韓文新聞系統 (web_app.py) 已在 port 5000 啟動")
+        else:
+            stdout, stderr = web_app_process.communicate()
+            print(f"✗ web_app.py 啟動後立即終止")
+            print(f"  錯誤: {stderr.decode('utf-8')}")
+    except Exception as e:
+        print(f"✗ 啟動 web_app.py 失敗: {e}")
+
+# 停止 web_app.py
+def stop_web_app():
+    global web_app_process
+    if web_app_process:
+        web_app_process.terminate()
+        web_app_process.wait()
+        print("✓ 韓文新聞系統已停止")
+
+# 註冊清理函數
+atexit.register(stop_web_app)
+
+# 處理 SIGINT (Ctrl+C) 信號
+def signal_handler(sig, frame):
+    print("\n正在關閉所有服務...")
+    stop_web_app()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
 
 # 密碼加密函數
 def hash_password(password):
@@ -143,3 +199,17 @@ if __name__ == '__main__':
         print("請確保 MongoDB 服務正在運行")
 
     app.run(debug=True, host='0.0.0.0', port=5001)
+    # 啟動 web_app.py
+    start_web_app()
+
+    print("✓ 用戶系統已在 port 5001 啟動")
+    print("=" * 50)
+    print("所有服務已啟動：")
+    print("  - 用戶系統: http://localhost:5001")
+    print("  - 韓文新聞: http://localhost:5000")
+    print("=" * 50)
+
+    try:
+        app.run(debug=True, host='0.0.0.0', port=5001, use_reloader=False)
+    finally:
+        stop_web_app()
