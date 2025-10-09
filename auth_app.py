@@ -9,7 +9,7 @@ app.secret_key = os.urandom(24)  # 用於 session 加密
 
 # MongoDB 連接
 client = MongoClient('mongodb://localhost:27017/')
-db = client['local']  # 資料庫名稱
+db = client['帳號密碼']  # 資料庫名稱
 collection = db['帳號密碼']  # 集合名稱
 
 # 密碼加密函數
