@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 語音對話生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .navbar-brand {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-back {
+            background: rgba(108, 117, 125, 0.8);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .btn-back:hover {
+            background: rgba(108, 117, 125, 1);
+        }
+
+        .header-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-section h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header-section p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: rgba(212, 237, 218, 0.9);
+            color: #155724;
+        }
+
+        .message.error {
+            background: rgba(248, 215, 218, 0.9);
+            color: #721c24;
+        }
+
+        .message.info {
+            background: rgba(209, 236, 241, 0.9);
+            color: #0c5460;
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: calc(100vh - 300px);
+            min-height: 600px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-box li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .info-box li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header-section h1 {
+                font-size: 2em;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="navbar-brand">🎙️ AI 語音對話生成器</div>
+            <div class="navbar-user">
+                <span>用戶: <strong id="username">{{ username }}</strong></span>
+                <a href="/dashboard" class="btn-back">← 返回主控台</a>
+            </div>
+        </nav>
+
+        <div id="message" class="message"></div>
+
+        <div class="header-section">
+            <h1>🎙️ Gemini Multi-Speaker TTS Generator</h1>
+            <p>使用 Google Gemini AI 將網頁內容轉換為多語言對話音頻</p>
+        </div>
+
+        <div class="info-box">
+            <h3>📌 功能特色</h3>
+            <ul>
+                <li>🌐 URL 分析：自動抓取網頁內容並生成 AI 對話</li>
+                <li>🌍 多語言支持：支援 16 種語言（中文、英文、韓文、日文等）</li>
+                <li>🎭 雙說話者模式：可自定義兩個說話者的名字和聲音</li>
+                <li>🎵 高品質 TTS：使用 Gemini 2.5 TTS 生成自然語音</li>
+                <li>💾 音頻下載：支援 WAV 格式下載</li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="iframe-container">
+                <iframe
+                    src="http://localhost:8501"
+                    title="Gemini TTS Generator"
+                    allow="microphone; camera">
+                </iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const username = "{{ username }}";
+        const messageDiv = document.getElementById('message');
+
+        // 顯示訊息
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // 檢查登入狀態
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/check_auth');
+                const data = await response.json();
+
+                if (!data.authenticated) {
+                    showMessage('請先登入', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error('檢查登入狀態錯誤:', error);
+            }
+        }
+
+        // 檢查 Streamlit 應用是否運行
+        async function checkStreamlitStatus() {
+            try {
+                const response = await fetch('http://localhost:8501', {
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                console.log('Streamlit 應用已連接');
+            } catch (error) {
+                showMessage('⚠️ TTS 應用尚未啟動，請確保 Streamlit 應用正在運行 (port 8501)', 'error');
+            }
+        }
+
+        // 頁面載入時檢查
+        window.addEventListener('load', () => {
+            checkAuth();
+            setTimeout(checkStreamlitStatus, 1000);
+        });
+
+        // 監聽 iframe 載入狀態
+        const iframe = document.querySelector('iframe');
+        iframe.addEventListener('load', () => {
+            console.log('TTS 應用已載入');
+        });
+
+        iframe.addEventListener('error', () => {
+            showMessage('TTS 應用載入失敗，請確保 Streamlit 正在運行', 'error');
+        });
+    </script>
+</body>
+</html>
