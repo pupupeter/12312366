@@ -11,6 +11,30 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+# 收藏單字的存儲文件
+SAVED_WORDS_FILE = 'saved_words.json'
+
+# 初始化收藏文件
+def init_saved_words():
+    if not os.path.exists(SAVED_WORDS_FILE):
+        with open(SAVED_WORDS_FILE, 'w', encoding='utf-8') as f:
+            json.dump([], f, ensure_ascii=False)
+
+# 讀取收藏的單字
+def load_saved_words():
+    try:
+        with open(SAVED_WORDS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except:
+        return []
+
+# 保存收藏的單字
+def save_words_to_file(words):
+    with open(SAVED_WORDS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(words, f, ensure_ascii=False, indent=2)
+
+init_saved_words()
+
 # 自訂抓取網頁內容工具
 class VisitWebpageTool(Tool):
     name = "visit_webpage"
@@ -209,11 +233,49 @@ def generate_graph_html(words_data, url):
             text-decoration: none;
             font-weight: bold;
         }}
+        .saved-indicator {{
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff6b6b;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }}
+        .notification {{
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            border: 2px solid #4ecdc4;
+        }}
+        @keyframes slideIn {{
+            from {{
+                transform: translateX(400px);
+                opacity: 0;
+            }}
+            to {{
+                transform: translateX(0);
+                opacity: 1;
+            }}
+        }}
     </style>
 </head>
 <body>
     <div class="back-button">
         <a href="/">← 返回首頁</a>
+        <a href="/review" style="margin-left: 10px;">📚 我的收藏</a>
     </div>
 
     <div class="header">
@@ -322,6 +384,74 @@ def generate_graph_html(words_data, url):
             .attr("class", "tooltip")
             .style("opacity", 0);
 
+        // 顯示通知
+        function showNotification(message, isSuccess = true) {{
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.borderColor = isSuccess ? '#4ecdc4' : '#ff6b6b';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {{
+                notification.remove();
+            }}, 3000);
+        }}
+
+        // 收藏單字功能
+        function saveWord(wordData) {{
+            fetch('/api/saved-words', {{
+                method: 'POST',
+                headers: {{
+                    'Content-Type': 'application/json',
+                }},
+                body: JSON.stringify({{ word: wordData }})
+            }})
+            .then(response => response.json())
+            .then(data => {{
+                if (data.exists) {{
+                    showNotification('⚠️ 單字已在收藏中', false);
+                }} else {{
+                    showNotification('✅ 單字已收藏！');
+                    // 標記此節點為已收藏
+                    markNodeAsSaved(wordData.korean);
+                }}
+            }})
+            .catch(error => {{
+                console.error('Error:', error);
+                showNotification('❌ 收藏失敗', false);
+            }});
+        }}
+
+        // 標記節點為已收藏
+        function markNodeAsSaved(korean) {{
+            node.each(function(d) {{
+                if (d.korean === korean) {{
+                    const nodeGroup = d3.select(this);
+                    // 檢查是否已有標記
+                    if (nodeGroup.select('.saved-indicator').empty()) {{
+                        nodeGroup.append('text')
+                            .attr('class', 'saved-indicator')
+                            .text('⭐')
+                            .attr('x', 20)
+                            .attr('y', -20)
+                            .attr('font-size', '16px')
+                            .attr('pointer-events', 'none');
+                    }}
+                }}
+            }});
+        }}
+
+        // 載入已收藏的單字並標記
+        fetch('/api/saved-words')
+            .then(response => response.json())
+            .then(data => {{
+                const savedKoreans = data.words.map(w => w.korean);
+                savedKoreans.forEach(korean => {{
+                    markNodeAsSaved(korean);
+                }});
+            }})
+            .catch(error => console.error('Error loading saved words:', error));
+
         // 節點事件
         node.on("mouseover", function(event, d) {{
             tooltip.transition()
@@ -333,6 +463,7 @@ def generate_graph_html(words_data, url):
                 <div class="definition"><strong>定義:</strong> ${{d.definition}}</div>
                 <div class="example"><strong>例句:</strong> ${{d.example_korean}}</div>
                 <div class="example"><strong>翻譯:</strong> ${{d.example_chinese}}</div>
+                <div style="margin-top: 10px; font-size: 10px; color: #4ecdc4;">💡 雙擊節點收藏單字</div>
             `)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 28) + "px");
@@ -341,6 +472,16 @@ def generate_graph_html(words_data, url):
             tooltip.transition()
                 .duration(500)
                 .style("opacity", 0);
+        }})
+        .on("dblclick", function(event, d) {{
+            event.stopPropagation();
+            saveWord({{
+                korean: d.korean,
+                chinese: d.chinese,
+                definition: d.definition,
+                example_korean: d.example_korean,
+                example_chinese: d.example_chinese
+            }});
         }});
 
         // 模擬更新
@@ -432,6 +573,49 @@ def get_result(filename):
         return send_file(filename, as_attachment=False)
     except FileNotFoundError:
         return jsonify({'error': '文件未找到'}), 404
+
+# API: 獲取所有收藏的單字
+@app.route('/api/saved-words', methods=['GET'])
+def get_saved_words():
+    words = load_saved_words()
+    return jsonify({'words': words})
+
+# API: 添加單字到收藏
+@app.route('/api/saved-words', methods=['POST'])
+def add_saved_word():
+    data = request.json
+    word = data.get('word')
+
+    if not word:
+        return jsonify({'error': '單字資料不完整'}), 400
+
+    words = load_saved_words()
+
+    # 檢查是否已存在（根據韓文詞彙判斷）
+    korean = word.get('korean', '')
+    if any(w.get('korean') == korean for w in words):
+        return jsonify({'message': '單字已存在於收藏中', 'exists': True})
+
+    # 添加時間戳記
+    word['saved_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    words.append(word)
+    save_words_to_file(words)
+
+    return jsonify({'message': '單字已收藏', 'exists': False})
+
+# API: 刪除收藏的單字
+@app.route('/api/saved-words/<korean>', methods=['DELETE'])
+def delete_saved_word(korean):
+    words = load_saved_words()
+    # 過濾掉要刪除的單字
+    words = [w for w in words if w.get('korean') != korean]
+    save_words_to_file(words)
+    return jsonify({'message': '單字已移除'})
+
+# 複習頁面
+@app.route('/review')
+def review():
+    return render_template('review.html')
 
 def process_korean_analysis(url, process_id):
     try:

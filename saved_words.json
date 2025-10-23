@@ -1,0 +1,26 @@
+[
+  {
+    "korean": "오징어",
+    "chinese": "魷魚",
+    "definition": "一種海洋軟體動物，也稱為墨魚。",
+    "example_korean": "오징어 볶음을 좋아해요.",
+    "example_chinese": "我喜歡炒魷魚。",
+    "saved_at": "2025-10-23 11:05:33"
+  },
+  {
+    "korean": "제주",
+    "chinese": "濟州",
+    "definition": "韓國的一個島嶼和省份，以其美麗的自然風光而聞名。",
+    "example_korean": "제주도에 가고 싶어요.",
+    "example_chinese": "我想去濟州島。",
+    "saved_at": "2025-10-23 11:05:35"
+  },
+  {
+    "korean": "바가지",
+    "chinese": "宰客，敲竹槓",
+    "definition": "不公正地索取過高的價格，通常指旅遊景點或節日期間的商家不合理抬價。",
+    "example_korean": "바가지 쓰지 않도록 조심하세요.",
+    "example_chinese": "小心別被敲竹槓了。",
+    "saved_at": "2025-10-23 11:05:36"
+  }
+]

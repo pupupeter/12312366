@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的收藏 - 韓文單字複習</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            text-decoration: none;
+            color: #ffeb3b;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.5);
+            transform: translateX(-5px);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .words-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .word-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .word-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: #4ecdc4;
+        }
+
+        .word-card .korean {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffeb3b;
+            margin-bottom: 10px;
+        }
+
+        .word-card .chinese {
+            font-size: 1.3em;
+            color: #ff6b6b;
+            margin-bottom: 15px;
+        }
+
+        .word-card .definition {
+            font-size: 0.95em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .word-card .example {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .word-card .example-korean {
+            font-style: italic;
+            margin-bottom: 5px;
+            color: #96CEB4;
+        }
+
+        .word-card .example-chinese {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+
+        .word-card .timestamp {
+            font-size: 0.75em;
+            opacity: 0.6;
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 107, 107, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            background: #ff6b6b;
+            transform: scale(1.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .empty-state .icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h2 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        .empty-state p {
+            font-size: 1.1em;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+
+        .empty-state .cta-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        .empty-state .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+
+        .search-box {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            border: none;
+            font-size: 16px;
+            width: 100%;
+            max-width: 500px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            color: #333;
+        }
+
+        .search-box:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-button">← 返回首頁</a>
+
+        <div class="header">
+            <h1>📚 我的收藏</h1>
+            <p>複習你收藏的韓文單字</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="number" id="totalWords">0</div>
+                <div class="label">收藏單字</div>
+            </div>
+        </div>
+
+        <input type="text" id="searchBox" class="search-box" placeholder="🔍 搜尋單字...">
+
+        <div id="wordsContainer" class="loading">
+            載入中...
+        </div>
+    </div>
+
+    <script>
+        let allWords = [];
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            return `收藏於 ${dateString}`;
+        }
+
+        function deleteWord(korean) {
+            if (!confirm(`確定要移除「${korean}」嗎？`)) {
+                return;
+            }
+
+            fetch(`/api/saved-words/${encodeURIComponent(korean)}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification('✅ 單字已移除');
+                loadWords();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('❌ 移除失敗', false);
+            });
+        }
+
+        function showNotification(message, isSuccess = true) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                border: 2px solid ${isSuccess ? '#4ecdc4' : '#ff6b6b'};
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function renderWords(words) {
+            const container = document.getElementById('wordsContainer');
+
+            if (words.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <h2>還沒有收藏的單字</h2>
+                        <p>瀏覽知識圖譜時，雙擊節點即可收藏單字</p>
+                        <a href="/" class="cta-btn">開始分析新聞</a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            container.className = 'words-grid';
+
+            words.forEach(word => {
+                const card = document.createElement('div');
+                card.className = 'word-card';
+                card.innerHTML = `
+                    <button class="delete-btn" onclick="deleteWord('${word.korean.replace(/'/g, "\\'")}')">×</button>
+                    <div class="korean">${word.korean}</div>
+                    <div class="chinese">${word.chinese}</div>
+                    <div class="definition"><strong>定義：</strong>${word.definition}</div>
+                    <div class="example">
+                        <div class="example-korean"><strong>例句：</strong>${word.example_korean}</div>
+                        <div class="example-chinese"><strong>翻譯：</strong>${word.example_chinese}</div>
+                    </div>
+                    <div class="timestamp">${formatDate(word.saved_at)}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterWords(searchTerm) {
+            searchTerm = searchTerm.toLowerCase().trim();
+
+            if (!searchTerm) {
+                renderWords(allWords);
+                return;
+            }
+
+            const filtered = allWords.filter(word => {
+                return word.korean.toLowerCase().includes(searchTerm) ||
+                       word.chinese.toLowerCase().includes(searchTerm) ||
+                       word.definition.toLowerCase().includes(searchTerm);
+            });
+
+            renderWords(filtered);
+        }
+
+        function loadWords() {
+            fetch('/api/saved-words')
+                .then(response => response.json())
+                .then(data => {
+                    allWords = data.words;
+                    document.getElementById('totalWords').textContent = allWords.length;
+                    renderWords(allWords);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('wordsContainer').innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">❌</div>
+                            <h2>載入失敗</h2>
+                            <p>請重新整理頁面</p>
+                        </div>
+                    `;
+                });
+        }
+
+        // 搜尋功能
+        document.getElementById('searchBox').addEventListener('input', function(e) {
+            filterWords(e.target.value);
+        });
+
+        // 載入單字
+        loadWords();
+    </script>
+</body>
+</html>
