@@ -212,7 +212,7 @@
             <p>將韓文新聞轉換為互動式詞彙學習網絡</p>
             <p>幫助中文使用者學習韓文詞彙</p>
             <div style="margin-top: 20px;">
-                <a href="/review" class="result-btn" style="text-decoration: none;">📚 我的收藏</a>
+                <a href="javascript:void(0)" id="reviewLink" class="result-btn" style="text-decoration: none;" onclick="goToReview()">📚 我的收藏</a>
             </div>
         </div>
 
@@ -274,6 +274,22 @@
         let currentProcessId = null;
         let statusCheckInterval = null;
 
+        // 檢測當前路徑,自動適應代理環境
+        function getBasePath() {
+            const path = window.location.pathname;
+            if (path.startsWith('/korean-app')) {
+                return '/korean-app';
+            }
+            return '';
+        }
+
+        function goToReview() {
+            const basePath = getBasePath();
+            const reviewUrl = basePath + '/review';
+            console.log('Navigating to review:', reviewUrl);
+            window.location.href = reviewUrl;
+        }
+
         function setUrl(url) {
             document.getElementById('newsUrl').value = url;
         }
@@ -302,7 +318,8 @@
         }
 
         function checkStatus(processId) {
-            fetch(`/status/${processId}`)
+            const basePath = getBasePath();
+            fetch(`${basePath}/status/${processId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'processing') {
@@ -311,7 +328,8 @@
                         updateProgress(100, `✅ ${data.message}`);
 
                         // 顯示結果按鈕
-                        document.getElementById('viewGraphBtn').href = `/result/${data.filename}`;
+                        const basePath = getBasePath();
+                        document.getElementById('viewGraphBtn').href = `${basePath}/result/${data.filename}`;
                         document.getElementById('resultContainer').style.display = 'block';
 
                         // 停止狀態檢查
@@ -367,7 +385,8 @@
             this.textContent = '處理中...';
 
             // 發送處理請求
-            fetch('/process', {
+            const basePath = getBasePath();
+            fetch(`${basePath}/process`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

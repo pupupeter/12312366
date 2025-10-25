@@ -10,6 +10,7 @@ import time
 from datetime import datetime
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False  # 確保 JSON 回應正確處理中文
 
 # 收藏單字的存儲文件
 SAVED_WORDS_FILE = 'saved_words.json'
@@ -274,8 +275,8 @@ def generate_graph_html(words_data, url):
 </head>
 <body>
     <div class="back-button">
-        <a href="/">← 返回首頁</a>
-        <a href="/review" style="margin-left: 10px;">📚 我的收藏</a>
+        <a href="/dashboard">← 返回首頁</a>
+        <a href="javascript:void(0)" id="reviewLink" onclick="goToReview()" style="margin-left: 10px;">📚 我的收藏</a>
     </div>
 
     <div class="header">
@@ -298,6 +299,32 @@ def generate_graph_html(words_data, url):
     </div>
 
     <script>
+        // 檢測當前路徑,自動適應代理環境
+        function getBasePath() {{
+            const path = window.location.pathname;
+            if (path.startsWith('/korean-app')) {{
+                return '/korean-app';
+            }}
+            return '';
+        }}
+
+        // 導航函數
+        function goHome() {{
+            const protocol = window.location.protocol;
+            const host = window.location.host;
+            const homeUrl = `${{protocol}}//${{host}}/dashboard`;
+            console.log('Current URL:', window.location.href);
+            console.log('Navigating to dashboard:', homeUrl);
+            window.location.href = homeUrl;
+        }}
+
+        function goToReview() {{
+            const basePath = getBasePath();
+            const reviewUrl = basePath + '/review';
+            console.log('Navigating to review:', reviewUrl);
+            window.location.href = reviewUrl;
+        }}
+
         const nodes = {json.dumps(nodes, ensure_ascii=False)};
         const links = {json.dumps(links, ensure_ascii=False)};
 
@@ -399,7 +426,8 @@ def generate_graph_html(words_data, url):
 
         // 收藏單字功能
         function saveWord(wordData) {{
-            fetch('/api/saved-words', {{
+            const basePath = getBasePath();
+            fetch(`${{basePath}}/api/saved-words`, {{
                 method: 'POST',
                 headers: {{
                     'Content-Type': 'application/json',
@@ -442,15 +470,18 @@ def generate_graph_html(words_data, url):
         }}
 
         // 載入已收藏的單字並標記
-        fetch('/api/saved-words')
-            .then(response => response.json())
-            .then(data => {{
-                const savedKoreans = data.words.map(w => w.korean);
-                savedKoreans.forEach(korean => {{
-                    markNodeAsSaved(korean);
-                }});
-            }})
-            .catch(error => console.error('Error loading saved words:', error));
+        (function() {{
+            const basePath = getBasePath();
+            fetch(`${{basePath}}/api/saved-words`)
+                .then(response => response.json())
+                .then(data => {{
+                    const savedKoreans = data.words.map(w => w.korean);
+                    savedKoreans.forEach(korean => {{
+                        markNodeAsSaved(korean);
+                    }});
+                }})
+                .catch(error => console.error('Error loading saved words:', error));
+        }})();
 
         // 節點事件
         node.on("mouseover", function(event, d) {{
@@ -570,7 +601,7 @@ def get_status(process_id):
 @app.route('/result/<filename>')
 def get_result(filename):
     try:
-        return send_file(filename, as_attachment=False)
+        return send_file(filename, as_attachment=False, mimetype='text/html; charset=utf-8')
     except FileNotFoundError:
         return jsonify({'error': '文件未找到'}), 404
 

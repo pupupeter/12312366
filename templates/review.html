@@ -245,7 +245,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="/" class="back-button">← 返回首頁</a>
+        <a href="/dashboard" class="back-button">← 返回首頁</a>
 
         <div class="header">
             <h1>📚 我的收藏</h1>
@@ -269,6 +269,34 @@
     <script>
         let allWords = [];
 
+        // 檢測當前路徑,自動適應代理環境
+        function getBasePath() {
+            const path = window.location.pathname;
+            if (path.startsWith('/korean-app')) {
+                return '/korean-app';
+            }
+            return '';
+        }
+
+        // 設置導航連結並提供導航函數
+        function goHome() {
+            const protocol = window.location.protocol;
+            const host = window.location.host;
+            const homeUrl = `${protocol}//${host}/dashboard`;
+            console.log('Current URL:', window.location.href);
+            console.log('Navigating to dashboard:', homeUrl);
+            window.location.href = homeUrl;
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            const basePath = getBasePath();
+            const homeLink = document.getElementById('homeLink');
+            if (homeLink) {
+                homeLink.href = basePath + '/';
+                console.log('Home link set to:', basePath + '/');
+            }
+        });
+
         function formatDate(dateString) {
             if (!dateString) return '';
             return `收藏於 ${dateString}`;
@@ -279,7 +307,8 @@
                 return;
             }
 
-            fetch(`/api/saved-words/${encodeURIComponent(korean)}`, {
+            const basePath = getBasePath();
+            fetch(`${basePath}/api/saved-words/${encodeURIComponent(korean)}`, {
                 method: 'DELETE'
             })
             .then(response => response.json())
@@ -369,7 +398,8 @@
         }
 
         function loadWords() {
-            fetch('/api/saved-words')
+            const basePath = getBasePath();
+            fetch(`${basePath}/api/saved-words`)
                 .then(response => response.json())
                 .then(data => {
                     allWords = data.words;
