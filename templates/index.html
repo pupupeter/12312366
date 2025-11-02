@@ -203,6 +203,57 @@
             border-radius: 10px;
             margin-top: 20px;
         }
+
+        .input-mode-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 25px;
+            font-size: 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: #ffeb3b;
+            box-shadow: 0 0 15px rgba(255, 235, 59, 0.3);
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin-bottom: 20px;
+            min-height: 150px;
+            resize: vertical;
+            font-family: 'Malgun Gothic', 'Microsoft JhengHei', Arial, sans-serif;
+        }
+
+        .text-input:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -217,8 +268,21 @@
         </div>
 
         <div class="input-group">
-            <label for="newsUrl">請輸入韓文新聞網址：</label>
-            <input type="url" id="newsUrl" class="url-input" placeholder="例如：https://news.naver.com/..." />
+            <div class="input-mode-toggle">
+                <button class="mode-btn active" id="urlModeBtn" onclick="switchMode('url')">🌐 網址輸入</button>
+                <button class="mode-btn" id="textModeBtn" onclick="switchMode('text')">📝 純文字輸入</button>
+            </div>
+
+            <div id="urlInputGroup">
+                <label for="newsUrl">請輸入韓文新聞網址：</label>
+                <input type="url" id="newsUrl" class="url-input" placeholder="例如：https://news.naver.com/..." />
+            </div>
+
+            <div id="textInputGroup" class="hidden">
+                <label for="newsText">請貼上韓文內容：</label>
+                <textarea id="newsText" class="text-input" placeholder="請貼上您想分析的韓文內容...&#10;例如：韓文新聞、文章、對話等"></textarea>
+            </div>
+
             <button id="processBtn" class="process-btn">開始分析</button>
         </div>
 
@@ -273,6 +337,7 @@
     <script>
         let currentProcessId = null;
         let statusCheckInterval = null;
+        let currentMode = 'url'; // 'url' or 'text'
 
         // 檢測當前路徑,自動適應代理環境
         function getBasePath() {
@@ -291,11 +356,30 @@
         }
 
         function setUrl(url) {
+            // 自動切換到 URL 模式
+            switchMode('url');
             document.getElementById('newsUrl').value = url;
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+
+            if (mode === 'url') {
+                document.getElementById('urlInputGroup').classList.remove('hidden');
+                document.getElementById('textInputGroup').classList.add('hidden');
+                document.getElementById('urlModeBtn').classList.add('active');
+                document.getElementById('textModeBtn').classList.remove('active');
+            } else {
+                document.getElementById('urlInputGroup').classList.add('hidden');
+                document.getElementById('textInputGroup').classList.remove('hidden');
+                document.getElementById('urlModeBtn').classList.remove('active');
+                document.getElementById('textModeBtn').classList.add('active');
+            }
         }
 
         function resetForm() {
             document.getElementById('newsUrl').value = '';
+            document.getElementById('newsText').value = '';
             document.getElementById('statusContainer').style.display = 'none';
             document.getElementById('processBtn').disabled = false;
             document.getElementById('processBtn').textContent = '開始分析';
@@ -368,11 +452,24 @@
         }
 
         document.getElementById('processBtn').addEventListener('click', function() {
-            const url = document.getElementById('newsUrl').value.trim();
+            let url = '';
+            let text = '';
+            let requestBody = {};
 
-            if (!url) {
-                showError('請輸入有效的網址');
-                return;
+            if (currentMode === 'url') {
+                url = document.getElementById('newsUrl').value.trim();
+                if (!url) {
+                    showError('請輸入有效的網址');
+                    return;
+                }
+                requestBody = { url: url, type: 'url' };
+            } else {
+                text = document.getElementById('newsText').value.trim();
+                if (!text) {
+                    showError('請貼上要分析的韓文內容');
+                    return;
+                }
+                requestBody = { text: text, type: 'text' };
             }
 
             // 重置之前的結果
@@ -391,7 +488,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ url: url })
+                body: JSON.stringify(requestBody)
             })
             .then(response => response.json())
             .then(data => {
@@ -417,7 +514,7 @@
             });
         });
 
-        // 允許按 Enter 鍵提交
+        // 允許按 Enter 鍵提交 (僅 URL 模式)
         document.getElementById('newsUrl').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 document.getElementById('processBtn').click();

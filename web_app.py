@@ -275,7 +275,7 @@ def generate_graph_html(words_data, url):
 </head>
 <body>
     <div class="back-button">
-        <a href="/dashboard">← 返回首頁</a>
+        <a href="javascript:void(0)" id="homeLink" onclick="goHome()">← 返回首頁</a>
         <a href="javascript:void(0)" id="reviewLink" onclick="goToReview()" style="margin-left: 10px;">📚 我的收藏</a>
     </div>
 
