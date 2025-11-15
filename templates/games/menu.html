@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>遊戲選單 - 單字學習遊戲</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 18px;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-info span {
+            color: #666;
+            margin-right: 10px;
+        }
+
+        .user-info strong {
+            color: #667eea;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .game-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .game-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .game-description {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .game-features {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .game-features li {
+            padding: 8px 0;
+            color: #555;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .game-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: #f5f7fa;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .play-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .play-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .info-section p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .tips-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .tips-list li {
+            padding: 12px;
+            margin: 10px 0;
+            background: #f5f7fa;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+            color: #555;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .game-card {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .game-card:nth-child(1) { animation-delay: 0.1s; }
+        .game-card:nth-child(2) { animation-delay: 0.2s; }
+        .game-card:nth-child(3) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="user-info">
+        <span>用戶:</span>
+        <strong>{{ username }}</strong>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎮 單字學習遊戲</h1>
+            <p>透過有趣的遊戲方式，輕鬆記憶單字！</p>
+            <a href="/dashboard" class="back-btn">← 返回主控台</a>
+        </div>
+
+        <div class="games-grid">
+            <!-- 配對遊戲 -->
+            <a href="/games/matching" class="game-card">
+                <div class="game-icon">🎯</div>
+                <div class="game-title">配對遊戲</div>
+                <div class="game-description">
+                    將單字與對應的翻譯配對，訓練單字記憶和反應速度。
+                </div>
+                <ul class="game-features">
+                    <li>支援韓文和中文單字</li>
+                    <li>即時配對反饋</li>
+                    <li>統計正確率</li>
+                    <li>隨機出題順序</li>
+                </ul>
+                <div class="game-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">題數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">⭐⭐</div>
+                        <div class="stat-label">難度</div>
+                    </div>
+                </div>
+                <div class="play-button">開始遊戲 →</div>
+            </a>
+
+            <!-- 打字遊戲 -->
+            <a href="/games/typing" class="game-card">
+                <div class="game-icon">⌨️</div>
+                <div class="game-title">打字遊戲</div>
+                <div class="game-description">
+                    根據中文提示輸入對應的單字，訓練拼寫能力和輸入速度。
+                </div>
+                <ul class="game-features">
+                    <li>支援韓文和中文輸入</li>
+                    <li>即時正誤判斷</li>
+                    <li>計時與速度統計</li>
+                    <li>詳細單字解析</li>
+                </ul>
+                <div class="game-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">全部</div>
+                        <div class="stat-label">題數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">⭐⭐⭐</div>
+                        <div class="stat-label">難度</div>
+                    </div>
+                </div>
+                <div class="play-button">開始遊戲 →</div>
+            </a>
+        </div>
+
+        <div class="info-section">
+            <h2>📖 使用說明</h2>
+            <p>
+                這些遊戲會使用您在知識圖譜系統中收藏的單字。如果您還沒有收藏任何單字，
+                請先前往韓文新聞系統或中文詞彙系統收藏一些單字。
+            </p>
+
+            <h2 style="margin-top: 30px;">💡 學習小技巧</h2>
+            <ul class="tips-list">
+                <li>
+                    <strong>配對遊戲技巧：</strong>
+                    先瀏覽所有選項，尋找熟悉的單字，建立基本印象後再開始配對。
+                </li>
+                <li>
+                    <strong>打字遊戲技巧：</strong>
+                    注意拼寫細節，韓文要注意收音（받침），中文要注意聲調標記。
+                </li>
+                <li>
+                    <strong>反覆練習：</strong>
+                    每天花 10-15 分鐘玩遊戲，重複練習能有效加深記憶。
+                </li>
+                <li>
+                    <strong>錯誤分析：</strong>
+                    答錯時仔細閱讀單字詳情，理解錯誤原因，避免重複犯錯。
+                </li>
+                <li>
+                    <strong>混合練習：</strong>
+                    輪流玩不同類型的遊戲，從多角度學習同一批單字，效果更佳。
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 載入單字數量統計
+        async function loadStats() {
+            try {
+                const [koreanRes, chineseRes] = await Promise.all([
+                    fetch('/korean-app/api/saved-words'),
+                    fetch('/chinese-app/api/saved-words')
+                ]);
+
+                const koreanData = await koreanRes.json();
+                const chineseData = await chineseRes.json();
+
+                const koreanCount = (koreanData.words || []).length;
+                const chineseCount = (chineseData.words || []).length;
+
+                console.log(`已載入 ${koreanCount} 個韓文單字，${chineseCount} 個中文單字`);
+            } catch (error) {
+                console.error('載入統計失敗:', error);
+            }
+        }
+
+        window.onload = loadStats;
+    </script>
+</body>
+</html>

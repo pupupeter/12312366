@@ -12,6 +12,7 @@ import sys
 import requests
 import re
 import urllib.parse
+from translations import get_translation
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # 用於 session 加密
@@ -170,7 +171,20 @@ def register():
 def dashboard():
     if 'username' not in session:
         return redirect(url_for('login'))
-    return render_template('dashboard.html', username=session['username'])
+
+    # 獲取用戶的語言設定
+    user = collection.find_one({'username': session['username']})
+    lang = 'zh-TW'
+    if user and 'settings' in user:
+        lang = user['settings'].get('language', 'zh-TW')
+
+    # 獲取翻譯
+    translations = get_translation(lang)
+
+    return render_template('dashboard.html',
+                         username=session['username'],
+                         lang=lang,
+                         t=translations)
 
 # 處理登入請求
 @app.route('/api/login', methods=['POST'])
@@ -194,6 +208,9 @@ def api_login():
             {'username': username},
             {'$set': {'last_login': datetime.now()}}
         )
+
+        # 記錄登入活動
+        log_activity(username, 'login', '用戶登入系統')
 
         return jsonify({
             'success': True,
@@ -258,6 +275,252 @@ def check_auth():
             'username': session['username']
         })
     return jsonify({'authenticated': False})
+
+# 獲取用戶資料
+@app.route('/api/user/profile', methods=['GET'])
+def get_user_profile():
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': '未登入'}), 401
+
+    user = collection.find_one({'username': session['username']})
+    if user:
+        return jsonify({
+            'success': True,
+            'user': {
+                'username': user['username'],
+                'email': user.get('email', ''),
+                'created_at': user.get('created_at').isoformat() if user.get('created_at') else None,
+                'last_login': user.get('last_login').isoformat() if user.get('last_login') else None,
+                'settings': user.get('settings', {
+                    'notifications': True,
+                    'theme': 'default',
+                    'language': 'zh-TW'
+                })
+            }
+        })
+    return jsonify({'success': False, 'message': '用戶不存在'}), 404
+
+# 更新用戶資料
+@app.route('/api/user/profile', methods=['PUT'])
+def update_user_profile():
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': '未登入'}), 401
+
+    data = request.json
+    email = data.get('email', '').strip()
+
+    # 檢查 email 是否被其他用戶使用
+    if email:
+        existing = collection.find_one({'email': email, 'username': {'$ne': session['username']}})
+        if existing:
+            return jsonify({'success': False, 'message': 'Email 已被使用'}), 409
+
+    # 更新用戶資料
+    collection.update_one(
+        {'username': session['username']},
+        {'$set': {'email': email}}
+    )
+
+    return jsonify({'success': True, 'message': '資料更新成功'})
+
+# 修改密碼
+@app.route('/api/user/password', methods=['PUT'])
+def change_password():
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': '未登入'}), 401
+
+    data = request.json
+    old_password = data.get('old_password', '')
+    new_password = data.get('new_password', '')
+
+    if not old_password or not new_password:
+        return jsonify({'success': False, 'message': '請填寫所有欄位'}), 400
+
+    if len(new_password) < 6:
+        return jsonify({'success': False, 'message': '新密碼長度至少需要 6 個字元'}), 400
+
+    # 驗證舊密碼
+    user = collection.find_one({'username': session['username']})
+    if not user or user['password'] != hash_password(old_password):
+        return jsonify({'success': False, 'message': '舊密碼錯誤'}), 401
+
+    # 更新密碼
+    collection.update_one(
+        {'username': session['username']},
+        {'$set': {'password': hash_password(new_password)}}
+    )
+
+    return jsonify({'success': True, 'message': '密碼修改成功'})
+
+# 獲取用戶設定
+@app.route('/api/user/settings', methods=['GET'])
+def get_user_settings():
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': '未登入'}), 401
+
+    user = collection.find_one({'username': session['username']})
+    if user:
+        settings = user.get('settings', {
+            'notifications': True,
+            'theme': 'default',
+            'language': 'zh-TW',
+            'email_notifications': False
+        })
+        return jsonify({'success': True, 'settings': settings})
+    return jsonify({'success': False, 'message': '用戶不存在'}), 404
+
+# 更新用戶設定
+@app.route('/api/user/settings', methods=['PUT'])
+def update_user_settings():
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': '未登入'}), 401
+
+    data = request.json
+    settings = {
+        'notifications': data.get('notifications', True),
+        'theme': data.get('theme', 'default'),
+        'language': data.get('language', 'zh-TW'),
+        'email_notifications': data.get('email_notifications', False)
+    }
+
+    collection.update_one(
+        {'username': session['username']},
+        {'$set': {'settings': settings}}
+    )
+
+    # 記錄設定更新活動
+    log_activity(session['username'], 'settings_update', '更新系統設定')
+
+    return jsonify({'success': True, 'message': '設定已儲存'})
+
+# 獲取翻譯 API (可選 - 用於前端動態切換語言而不重新載入)
+@app.route('/api/translations/<lang_code>', methods=['GET'])
+def get_translations(lang_code):
+    """獲取指定語言的翻譯"""
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': '未登入'}), 401
+
+    translations = get_translation(lang_code)
+    return jsonify({'success': True, 'translations': translations, 'lang': lang_code})
+
+# 記錄用戶活動
+def log_activity(username, activity_type, description):
+    """記錄用戶活動到 MongoDB"""
+    try:
+        activity_log = db['activity_logs']
+        activity_log.insert_one({
+            'username': username,
+            'type': activity_type,
+            'description': description,
+            'timestamp': datetime.now(),
+            'ip_address': request.remote_addr
+        })
+    except Exception as e:
+        print(f"記錄活動失敗: {e}")
+
+# 獲取活動記錄
+@app.route('/api/user/activities', methods=['GET'])
+def get_user_activities():
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': '未登入'}), 401
+
+    try:
+        activity_log = db['activity_logs']
+        # 獲取最近 50 條記錄
+        activities = list(activity_log.find(
+            {'username': session['username']}
+        ).sort('timestamp', -1).limit(50))
+
+        # 轉換為 JSON 可序列化格式
+        activities_list = []
+        for activity in activities:
+            activities_list.append({
+                'type': activity.get('type', ''),
+                'description': activity.get('description', ''),
+                'timestamp': activity.get('timestamp').isoformat() if activity.get('timestamp') else None,
+                'ip_address': activity.get('ip_address', '')
+            })
+
+        return jsonify({'success': True, 'activities': activities_list})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'獲取活動記錄失敗: {str(e)}'}), 500
+
+# 上傳用戶頭像
+@app.route('/api/user/avatar', methods=['POST'])
+def upload_avatar():
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': '未登入'}), 401
+
+    data = request.json
+    avatar_data = data.get('avatar', '')
+
+    # 驗證是否為 base64 圖片
+    if not avatar_data.startswith('data:image/'):
+        return jsonify({'success': False, 'message': '無效的圖片格式'}), 400
+
+    # 檢查大小（base64 字符串長度，約 2MB 限制）
+    if len(avatar_data) > 2 * 1024 * 1024 * 1.37:  # base64 會比原始大小大約 37%
+        return jsonify({'success': False, 'message': '圖片大小超過 2MB 限制'}), 400
+
+    # 更新用戶頭像
+    try:
+        collection.update_one(
+            {'username': session['username']},
+            {'$set': {'avatar': avatar_data}}
+        )
+        return jsonify({'success': True, 'message': '頭像更新成功'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'更新失敗: {str(e)}'}), 500
+
+# 獲取用戶頭像
+@app.route('/api/user/avatar', methods=['GET'])
+def get_avatar():
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': '未登入'}), 401
+
+    user = collection.find_one({'username': session['username']})
+    if user and 'avatar' in user:
+        return jsonify({'success': True, 'avatar': user['avatar']})
+    return jsonify({'success': True, 'avatar': None})
+
+# 獲取系統統計
+@app.route('/api/user/stats', methods=['GET'])
+def get_user_stats():
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': '未登入'}), 401
+
+    try:
+        user = collection.find_one({'username': session['username']})
+        activity_log = db['activity_logs']
+
+        # 計算登入次數
+        login_count = activity_log.count_documents({
+            'username': session['username'],
+            'type': 'login'
+        })
+
+        # 計算總活動次數
+        total_activities = activity_log.count_documents({
+            'username': session['username']
+        })
+
+        # 計算使用天數
+        if user and user.get('created_at'):
+            days_active = (datetime.now() - user['created_at']).days + 1
+        else:
+            days_active = 0
+
+        return jsonify({
+            'success': True,
+            'stats': {
+                'login_count': login_count,
+                'total_activities': total_activities,
+                'days_active': days_active,
+                'member_since': user.get('created_at').isoformat() if user.get('created_at') else None
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'獲取統計失敗: {str(e)}'}), 500
 
 # 代理路由：韓文新聞系統 (轉發到 port 5000)
 @app.route('/korean-app', defaults={'path': ''})
@@ -378,6 +641,27 @@ def proxy_chinese(path):
 
     except requests.exceptions.RequestException as e:
         return jsonify({'error': '無法連接到中文詞彙系統', 'details': str(e)}), 503
+
+# 遊戲選單頁面
+@app.route('/games')
+def games_menu():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('games/menu.html', username=session['username'])
+
+# 配對遊戲頁面
+@app.route('/games/matching')
+def matching_game():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('games/matching.html', username=session['username'])
+
+# 打字遊戲頁面
+@app.route('/games/typing')
+def typing_game():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('games/typing.html', username=session['username'])
 
 # TTS 頁面 (嵌入 Streamlit)
 @app.route('/tts')

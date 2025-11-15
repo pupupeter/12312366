@@ -58,6 +58,54 @@
             justify-content: center;
             font-size: 1.2em;
             font-weight: bold;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .profile-avatar-large {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            font-weight: bold;
+            margin: 0 auto 20px;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .profile-avatar-large:hover {
+            transform: scale(1.05);
+        }
+
+        .avatar-upload-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px;
+            font-size: 0.3em;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .profile-avatar-large:hover .avatar-upload-overlay {
+            opacity: 1;
+        }
+
+        #avatarInput {
+            display: none;
         }
 
         .btn-logout {
@@ -190,6 +238,241 @@
             color: #721c24;
         }
 
+        /* 模態視窗樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 50px auto;
+            padding: 0;
+            border-radius: 20px;
+            max-width: 600px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 30px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        .close {
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            line-height: 1;
+        }
+
+        .close:hover {
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 30px;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #5568d3, #653a8b);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            opacity: 0.8;
+        }
+
+        .info-value {
+            font-weight: bold;
+        }
+
+        .activity-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .activity-description {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .activity-time {
+            opacity: 0.7;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .help-section {
+            margin-bottom: 30px;
+        }
+
+        .help-section h3 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .help-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .help-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .help-item-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .help-item-content {
+            display: none;
+            opacity: 0.9;
+            line-height: 1.6;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .help-item.active .help-item-content {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+        }
+
         @media (max-width: 768px) {
             .navbar {
                 flex-direction: column;
@@ -199,91 +482,349 @@
             .welcome-section h1 {
                 font-size: 2em;
             }
+
+            .modal-content {
+                margin: 20px;
+                max-width: calc(100% - 40px);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <nav class="navbar">
-            <div class="navbar-brand">🏠 用戶系統</div>
+            <div class="navbar-brand" data-i18n="nav_title">{{ t.nav_title }}</div>
             <div class="navbar-user">
                 <div class="user-info">
                     <div class="user-avatar" id="userAvatar">?</div>
                     <span id="username">{{ username }}</span>
                 </div>
-                <button class="btn-logout" onclick="logout()">登出</button>
+                <button class="btn-logout" onclick="logout()" data-i18n="logout">{{ t.logout }}</button>
             </div>
         </nav>
 
         <div id="message" class="message"></div>
 
         <div class="welcome-section">
-            <h1>歡迎回來，<span id="welcomeUsername">{{ username }}</span>！👋</h1>
-            <p>您已成功登入系統</p>
+            <h1><span data-i18n="welcome_back">{{ t.welcome_back }}</span>,<span id="welcomeUsername">{{ username }}</span>!</h1>
+            <p data-i18n="login_success">{{ t.login_success }}</p>
         </div>
 
         <div class="cards-grid">
             <div class="card" onclick="window.open('/korean-app', '_blank')">
-                <div class="card-icon">🇰🇷</div>
-                <h3>韓文新聞知識圖譜</h3>
-                <p>分析韓文新聞文章，生成互動式詞彙學習圖譜</p>
+                <div class="card-icon">👘</div>
+                <h3 data-i18n="korean_news_title">{{ t.korean_news_title }}</h3>
+                <p data-i18n="korean_news_desc">{{ t.korean_news_desc }}</p>
             </div>
 
             <div class="card" onclick="window.open('/chinese-app', '_blank')">
-                <div class="card-icon">🇨🇳</div>
-                <h3>中文詞彙知識圖譜</h3>
-                <p>分析中文文章，生成帶有詞彙分級的互動式學習圖譜</p>
+                <div class="card-icon">🀄</div>
+                <h3 data-i18n="chinese_vocab_title">{{ t.chinese_vocab_title }}</h3>
+                <p data-i18n="chinese_vocab_desc">{{ t.chinese_vocab_desc }}</p>
             </div>
 
             <div class="card" onclick="window.open('/tts', '_blank')">
                 <div class="card-icon">🎙️</div>
-                <h3>AI 語音對話生成器</h3>
-                <p>使用 Gemini TTS 將網頁內容轉換為多語言 AI 對話音頻</p>
+                <h3 data-i18n="ai_tts_title">{{ t.ai_tts_title }}</h3>
+                <p data-i18n="ai_tts_desc">{{ t.ai_tts_desc }}</p>
             </div>
 
-            <div class="card" onclick="alert('個人資料功能開發中')">
+            <div class="card" onclick="window.location.href='/games'">
+                <div class="card-icon">🎮</div>
+                <h3 data-i18n="word_games_title">{{ t.word_games_title }}</h3>
+                <p data-i18n="word_games_desc">{{ t.word_games_desc }}</p>
+            </div>
+
+            <div class="card" onclick="openProfileModal()">
                 <div class="card-icon">👤</div>
-                <h3>個人資料</h3>
-                <p>查看和編輯您的個人資料、修改密碼等</p>
+                <h3 data-i18n="profile_title">{{ t.profile_title }}</h3>
+                <p data-i18n="profile_desc">{{ t.profile_desc }}</p>
             </div>
 
-            <div class="card" onclick="alert('設定功能開發中')">
+            <div class="card" onclick="openSettingsModal()">
                 <div class="card-icon">⚙️</div>
-                <h3>系統設定</h3>
-                <p>自訂系統偏好設定和通知選項</p>
+                <h3 data-i18n="settings_title">{{ t.settings_title }}</h3>
+                <p data-i18n="settings_desc">{{ t.settings_desc }}</p>
             </div>
 
-            <div class="card" onclick="alert('活動記錄功能開發中')">
+            <div class="card" onclick="openActivitiesModal()">
                 <div class="card-icon">📊</div>
-                <h3>活動記錄</h3>
-                <p>查看您的登入歷史和操作記錄</p>
+                <h3 data-i18n="activities_title">{{ t.activities_title }}</h3>
+                <p data-i18n="activities_desc">{{ t.activities_desc }}</p>
             </div>
 
-            <div class="card" onclick="alert('說明功能開發中')">
+            <div class="card" onclick="openHelpModal()">
                 <div class="card-icon">❓</div>
-                <h3>說明中心</h3>
-                <p>獲取使用說明和常見問題解答</p>
+                <h3 data-i18n="help_title">{{ t.help_title }}</h3>
+                <p data-i18n="help_desc">{{ t.help_desc }}</p>
             </div>
         </div>
 
         <div class="stats-section">
-            <h2>📈 系統統計</h2>
+            <h2 data-i18n="stats_title">{{ t.stats_title }}</h2>
             <div class="stats-grid">
                 <div class="stat-item">
-                    <div class="stat-number">1</div>
-                    <div class="stat-label">登入次數</div>
+                    <div class="stat-number" id="loginCount">-</div>
+                    <div class="stat-label" data-i18n="login_count">{{ t.login_count }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="totalActivities">-</div>
+                    <div class="stat-label" data-i18n="total_activities">{{ t.total_activities }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="daysActive">-</div>
+                    <div class="stat-label" data-i18n="days_active">{{ t.days_active }}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-number" id="currentTime">--:--</div>
-                    <div class="stat-label">目前時間</div>
+                    <div class="stat-label" data-i18n="current_time">{{ t.current_time }}</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">待辦事項</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 個人資料模態視窗 -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👤 個人資料</h2>
+                <span class="close" onclick="closeModal('profileModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- 頭像上傳區域 -->
+                <div class="profile-avatar-large" id="profileAvatarLarge" onclick="document.getElementById('avatarInput').click()">
+                    <span id="profileAvatarText">?</span>
+                    <div class="avatar-upload-overlay">點擊更換頭像</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number">100%</div>
-                    <div class="stat-label">系統正常</div>
+                <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" onchange="handleAvatarUpload(event)">
+
+                <div class="form-group">
+                    <label>用戶名稱</label>
+                    <input type="text" id="profileUsername" disabled>
+                </div>
+                <div class="form-group">
+                    <label>電子郵件</label>
+                    <input type="email" id="profileEmail" placeholder="請輸入電子郵件">
+                </div>
+                <div class="info-row">
+                    <span class="info-label">註冊時間</span>
+                    <span class="info-value" id="profileCreatedAt">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">最後登入</span>
+                    <span class="info-value" id="profileLastLogin">-</span>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="updateProfile()">儲存變更</button>
+                    <button class="btn" onclick="openChangePasswordModal()">修改密碼</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密碼模態視窗 -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔒 修改密碼</h2>
+                <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>舊密碼</label>
+                    <input type="password" id="oldPassword" placeholder="請輸入舊密碼">
+                </div>
+                <div class="form-group">
+                    <label>新密碼</label>
+                    <input type="password" id="newPassword" placeholder="請輸入新密碼 (至少 6 個字元)">
+                </div>
+                <div class="form-group">
+                    <label>確認新密碼</label>
+                    <input type="password" id="confirmPassword" placeholder="請再次輸入新密碼">
+                </div>
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="changePassword()">確認修改</button>
+                    <button class="btn" onclick="closeModal('passwordModal')">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系統設定模態視窗 -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ 系統設定</h2>
+                <span class="close" onclick="closeModal('settingsModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <h3 style="margin-bottom: 15px;">通知設定</h3>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="settingNotifications">
+                    <label for="settingNotifications">啟用系統通知</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="settingEmailNotifications">
+                    <label for="settingEmailNotifications">啟用電子郵件通知</label>
+                </div>
+
+                <h3 style="margin: 25px 0 15px;">介面設定</h3>
+                <div class="form-group">
+                    <label>主題</label>
+                    <select id="settingTheme">
+                        <option value="default">預設主題</option>
+                        <option value="dark">深色主題</option>
+                        <option value="light">淺色主題</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>語言</label>
+                    <select id="settingLanguage">
+                        <option value="zh-TW">繁體中文</option>
+                        <option value="zh-CN">简体中文</option>
+                        <option value="en">English</option>
+                        <option value="ko">한국어</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 25px;">
+                    <button class="btn btn-primary" onclick="saveSettings()">儲存設定</button>
+                    <button class="btn" onclick="closeModal('settingsModal')">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 活動記錄模態視窗 -->
+    <div id="activitiesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 活動記錄</h2>
+                <span class="close" onclick="closeModal('activitiesModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="activitiesList">
+                    <div class="loading">載入中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 說明中心模態視窗 -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>❓ 說明中心</h2>
+                <span class="close" onclick="closeModal('helpModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3>🚀 快速開始</h3>
+                    <div class="help-item" onclick="toggleHelp(this)">
+                        <div class="help-item-title">
+                            <span>如何使用韓文新聞知識圖譜?</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="help-item-content">
+                            1. 點擊主控台的「韓文新聞知識圖譜」卡片<br>
+                            2. 在輸入框中貼上韓文新聞文章的網址<br>
+                            3. 點擊「開始分析」按鈕<br>
+                            4. 等待系統生成知識圖譜 (約需 30-60 秒)<br>
+                            5. 在圖譜中可以查看詞彙關係、定義和例句<br>
+                            6. 雙擊節點可以收藏單詞
+                        </div>
+                    </div>
+                    <div class="help-item" onclick="toggleHelp(this)">
+                        <div class="help-item-title">
+                            <span>如何使用中文詞彙知識圖譜?</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="help-item-content">
+                            操作方式與韓文新聞圖譜相同,但針對中文內容進行分析。系統會自動識別詞彙難度等級,並標註 HSK 等級。
+                        </div>
+                    </div>
+                    <div class="help-item" onclick="toggleHelp(this)">
+                        <div class="help-item-title">
+                            <span>如何使用 AI 語音對話生成器?</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="help-item-content">
+                            1. 點擊「AI 語音對話生成器」卡片<br>
+                            2. 選擇「從網址生成」或「手動輸入對話」<br>
+                            3. 選擇目標語言 (支援 16 種語言)<br>
+                            4. 選擇說話者語音 (Kore, Puck, Charon 等)<br>
+                            5. 點擊「生成音頻」<br>
+                            6. 等待生成完成後播放或下載 WAV 檔案
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>🔧 常見問題</h3>
+                    <div class="help-item" onclick="toggleHelp(this)">
+                        <div class="help-item-title">
+                            <span>為什麼生成知識圖譜很慢?</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="help-item-content">
+                            系統需要下載網頁內容、使用 AI 模型分析文本、提取關鍵詞彙並建立關係圖。整個過程通常需要 30-60 秒,請耐心等待。如果超過 2 分鐘沒有回應,請重新整理頁面再試一次。
+                        </div>
+                    </div>
+                    <div class="help-item" onclick="toggleHelp(this)">
+                        <div class="help-item-title">
+                            <span>收藏的單詞儲存在哪裡?</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="help-item-content">
+                            收藏的單詞儲存在伺服器的 JSON 檔案中 (saved_words.json 和 saved_words_chinese.json)。您可以在系統中的「複習」頁面查看所有收藏的單詞。
+                        </div>
+                    </div>
+                    <div class="help-item" onclick="toggleHelp(this)">
+                        <div class="help-item-title">
+                            <span>如何修改個人資料?</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="help-item-content">
+                            點擊主控台的「個人資料」卡片,您可以修改電子郵件和密碼。用戶名稱在註冊後無法修改。
+                        </div>
+                    </div>
+                    <div class="help-item" onclick="toggleHelp(this)">
+                        <div class="help-item-title">
+                            <span>忘記密碼怎麼辦?</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="help-item-content">
+                            目前系統尚未提供密碼重設功能。如果忘記密碼,請聯絡系統管理員協助重設。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>💡 技術支援</h3>
+                    <div class="help-item" onclick="toggleHelp(this)">
+                        <div class="help-item-title">
+                            <span>系統需求</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="help-item-content">
+                            - 瀏覽器: Chrome, Firefox, Safari 或 Edge 最新版本<br>
+                            - 網路連線: 穩定的網路連線<br>
+                            - 螢幕解析度: 建議 1280x720 以上<br>
+                            - JavaScript: 必須啟用
+                        </div>
+                    </div>
+                    <div class="help-item" onclick="toggleHelp(this)">
+                        <div class="help-item-title">
+                            <span>支援的內容來源</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="help-item-content">
+                            - 韓文新聞: 支援大部分韓國新聞網站<br>
+                            - 中文文章: 支援繁體和簡體中文網頁<br>
+                            - TTS: 支援公開可存取的網頁內容<br>
+                            注意: 某些網站可能有反爬蟲機制,導致無法擷取內容
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -292,10 +833,111 @@
     <script>
         const username = "{{ username }}";
         const messageDiv = document.getElementById('message');
+        let currentLang = "{{ lang }}";
 
-        // 設定用戶頭像（顯示第一個字）
+        // 翻譯字典 (從後端傳入)
+        const translations = {{ t|tojson }};
+
+        // 全局變量存儲頭像
+        let currentAvatar = null;
+
+        // 設定用戶頭像（顯示第一個字或圖片）
         const userAvatar = document.getElementById('userAvatar');
-        userAvatar.textContent = username.charAt(0).toUpperCase();
+
+        // 載入用戶頭像
+        async function loadUserAvatar() {
+            try {
+                const response = await fetch('/api/user/avatar');
+                const data = await response.json();
+
+                if (data.success && data.avatar) {
+                    currentAvatar = data.avatar;
+                    // 設置導航欄頭像
+                    userAvatar.style.backgroundImage = `url(${data.avatar})`;
+                    userAvatar.textContent = '';
+                } else {
+                    // 沒有頭像，顯示首字母
+                    userAvatar.textContent = username.charAt(0).toUpperCase();
+                }
+            } catch (error) {
+                console.error('載入頭像失敗:', error);
+                userAvatar.textContent = username.charAt(0).toUpperCase();
+            }
+        }
+
+        // 頁面載入時執行
+        loadUserAvatar();
+
+        // 處理頭像上傳
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 檢查文件類型
+            if (!file.type.startsWith('image/')) {
+                showMessage('請上傳圖片文件', 'error');
+                return;
+            }
+
+            // 檢查文件大小 (2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                showMessage('圖片大小不能超過 2MB', 'error');
+                return;
+            }
+
+            // 讀取文件並轉換為 base64
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64Image = e.target.result;
+
+                try {
+                    const response = await fetch('/api/user/avatar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ avatar: base64Image })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        currentAvatar = base64Image;
+                        // 更新所有頭像顯示
+                        updateAvatarDisplay(base64Image);
+                        showMessage('頭像更新成功', 'success');
+                    } else {
+                        showMessage(data.message || '上傳失敗', 'error');
+                    }
+                } catch (error) {
+                    console.error('上傳頭像失敗:', error);
+                    showMessage('上傳失敗,請重試', 'error');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 更新所有頭像顯示
+        function updateAvatarDisplay(avatarData) {
+            // 更新導航欄頭像
+            userAvatar.style.backgroundImage = `url(${avatarData})`;
+            userAvatar.textContent = '';
+
+            // 更新個人資料模態窗口頭像
+            const profileAvatarLarge = document.getElementById('profileAvatarLarge');
+            if (profileAvatarLarge) {
+                profileAvatarLarge.style.backgroundImage = `url(${avatarData})`;
+                document.getElementById('profileAvatarText').textContent = '';
+            }
+        }
+
+        // 更新頁面語言
+        function updatePageLanguage(newTranslations) {
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (newTranslations[key]) {
+                    element.textContent = newTranslations[key];
+                }
+            });
+        }
 
         // 顯示訊息
         function showMessage(text, type) {
@@ -309,7 +951,7 @@
 
         // 登出功能
         async function logout() {
-            if (confirm('確定要登出嗎？')) {
+            if (confirm(translations.logout_confirm || '確定要登出嗎?')) {
                 try {
                     const response = await fetch('/api/logout', {
                         method: 'POST'
@@ -318,16 +960,16 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        showMessage('登出成功，正在跳轉...', 'success');
+                        showMessage(translations.logout_success || '登出成功,正在跳轉...', 'success');
                         setTimeout(() => {
                             window.location.href = '/login';
                         }, 1000);
                     } else {
-                        showMessage('登出失敗', 'error');
+                        showMessage(translations.logout_failed || '登出失敗', 'error');
                     }
                 } catch (error) {
                     console.error('登出錯誤:', error);
-                    showMessage('登出失敗，請重試', 'error');
+                    showMessage(translations.logout_failed || '登出失敗,請重試', 'error');
                 }
             }
         }
@@ -343,9 +985,280 @@
             document.getElementById('currentTime').textContent = timeString;
         }
 
-        // 每秒更新時間
-        updateTime();
-        setInterval(updateTime, 1000);
+        // 載入統計數據
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/user/stats');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('loginCount').textContent = data.stats.login_count;
+                    document.getElementById('totalActivities').textContent = data.stats.total_activities;
+                    document.getElementById('daysActive').textContent = data.stats.days_active;
+                }
+            } catch (error) {
+                console.error('載入統計失敗:', error);
+            }
+        }
+
+        // 模態視窗控制
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // 點擊視窗外關閉
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // 開啟個人資料
+        async function openProfileModal() {
+            openModal('profileModal');
+
+            // 設置頭像顯示
+            const profileAvatarLarge = document.getElementById('profileAvatarLarge');
+            const profileAvatarText = document.getElementById('profileAvatarText');
+
+            if (currentAvatar) {
+                profileAvatarLarge.style.backgroundImage = `url(${currentAvatar})`;
+                profileAvatarText.textContent = '';
+            } else {
+                profileAvatarLarge.style.backgroundImage = '';
+                profileAvatarText.textContent = username.charAt(0).toUpperCase();
+            }
+
+            try {
+                const response = await fetch('/api/user/profile');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('profileUsername').value = data.user.username;
+                    document.getElementById('profileEmail').value = data.user.email || '';
+                    document.getElementById('profileCreatedAt').textContent =
+                        data.user.created_at ? new Date(data.user.created_at).toLocaleString('zh-TW') : '-';
+                    document.getElementById('profileLastLogin').textContent =
+                        data.user.last_login ? new Date(data.user.last_login).toLocaleString('zh-TW') : '-';
+                }
+            } catch (error) {
+                console.error('載入個人資料失敗:', error);
+                showMessage('載入資料失敗', 'error');
+            }
+        }
+
+        // 更新個人資料
+        async function updateProfile() {
+            const email = document.getElementById('profileEmail').value.trim();
+
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('資料更新成功', 'success');
+                } else {
+                    showMessage(data.message || '更新失敗', 'error');
+                }
+            } catch (error) {
+                console.error('更新資料失敗:', error);
+                showMessage('更新失敗,請重試', 'error');
+            }
+        }
+
+        // 開啟修改密碼
+        function openChangePasswordModal() {
+            closeModal('profileModal');
+            openModal('passwordModal');
+            // 清空輸入框
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+
+        // 修改密碼
+        async function changePassword() {
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!oldPassword || !newPassword || !confirmPassword) {
+                showMessage('請填寫所有欄位', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showMessage('新密碼與確認密碼不符', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showMessage('新密碼長度至少需要 6 個字元', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/user/password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('密碼修改成功', 'success');
+                    closeModal('passwordModal');
+                } else {
+                    showMessage(data.message || '修改失敗', 'error');
+                }
+            } catch (error) {
+                console.error('修改密碼失敗:', error);
+                showMessage('修改失敗,請重試', 'error');
+            }
+        }
+
+        // 開啟系統設定
+        async function openSettingsModal() {
+            openModal('settingsModal');
+            try {
+                const response = await fetch('/api/user/settings');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('settingNotifications').checked = data.settings.notifications;
+                    document.getElementById('settingEmailNotifications').checked = data.settings.email_notifications || false;
+                    document.getElementById('settingTheme').value = data.settings.theme || 'default';
+                    document.getElementById('settingLanguage').value = data.settings.language || 'zh-TW';
+                }
+            } catch (error) {
+                console.error('載入設定失敗:', error);
+            }
+        }
+
+        // 儲存設定
+        async function saveSettings() {
+            const oldLang = currentLang;
+            const newLang = document.getElementById('settingLanguage').value;
+            const settings = {
+                notifications: document.getElementById('settingNotifications').checked,
+                email_notifications: document.getElementById('settingEmailNotifications').checked,
+                theme: document.getElementById('settingTheme').value,
+                language: newLang
+            };
+
+            try {
+                const response = await fetch('/api/user/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(translations.settings_saved || '設定已儲存', 'success');
+                    closeModal('settingsModal');
+
+                    // 如果語言改變了,重新載入頁面以套用新語言
+                    if (oldLang !== newLang) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    }
+                } else {
+                    showMessage(data.message || translations.settings_save_failed || '儲存失敗', 'error');
+                }
+            } catch (error) {
+                console.error('儲存設定失敗:', error);
+                showMessage(translations.settings_save_failed || '儲存失敗,請重試', 'error');
+            }
+        }
+
+        // 開啟活動記錄
+        async function openActivitiesModal() {
+            openModal('activitiesModal');
+            const listDiv = document.getElementById('activitiesList');
+            listDiv.innerHTML = '<div class="loading">載入中...</div>';
+
+            try {
+                const response = await fetch('/api/user/activities');
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.activities.length === 0) {
+                        listDiv.innerHTML = '<p style="text-align: center; opacity: 0.7;">暫無活動記錄</p>';
+                    } else {
+                        listDiv.innerHTML = data.activities.map(activity => `
+                            <div class="activity-item">
+                                <div class="activity-header">
+                                    <span>${getActivityIcon(activity.type)} ${getActivityTypeName(activity.type)}</span>
+                                </div>
+                                <div class="activity-description">${activity.description}</div>
+                                <div class="activity-time">
+                                    ${new Date(activity.timestamp).toLocaleString('zh-TW')}
+                                    ${activity.ip_address ? ` · IP: ${activity.ip_address}` : ''}
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    listDiv.innerHTML = '<p style="text-align: center; opacity: 0.7;">載入失敗</p>';
+                }
+            } catch (error) {
+                console.error('載入活動記錄失敗:', error);
+                listDiv.innerHTML = '<p style="text-align: center; opacity: 0.7;">載入失敗</p>';
+            }
+        }
+
+        // 活動類型圖示
+        function getActivityIcon(type) {
+            const icons = {
+                'login': '🔑',
+                'logout': '👋',
+                'profile_update': '✏️',
+                'password_change': '🔒',
+                'settings_update': '⚙️',
+                'korean_graph': '🇰🇷',
+                'chinese_graph': '🇨🇳',
+                'tts_generate': '🎙️'
+            };
+            return icons[type] || '📝';
+        }
+
+        // 活動類型名稱
+        function getActivityTypeName(type) {
+            const names = {
+                'login': '登入',
+                'logout': '登出',
+                'profile_update': '資料更新',
+                'password_change': '密碼修改',
+                'settings_update': '設定更新',
+                'korean_graph': '韓文圖譜',
+                'chinese_graph': '中文圖譜',
+                'tts_generate': 'TTS 生成'
+            };
+            return names[type] || '其他';
+        }
+
+        // 開啟說明中心
+        function openHelpModal() {
+            openModal('helpModal');
+        }
+
+        // 切換說明項目
+        function toggleHelp(element) {
+            element.classList.toggle('active');
+        }
 
         // 檢查登入狀態
         async function checkAuth() {
@@ -361,7 +1274,10 @@
             }
         }
 
-        // 每 5 分鐘檢查一次登入狀態
+        // 初始化
+        updateTime();
+        setInterval(updateTime, 1000);
+        loadStats();
         setInterval(checkAuth, 5 * 60 * 1000);
     </script>
 </body>

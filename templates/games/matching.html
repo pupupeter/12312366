@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配對遊戲 - 單字配對挑戰</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
+
+        .header .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .card-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            padding: 20px;
+            background: white;
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 18px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .card:hover:not(.matched):not(.disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .card.selected {
+            border-color: #667eea;
+            background: #e8eaf6;
+            transform: scale(1.05);
+        }
+
+        .card.matched {
+            background: #c8e6c9;
+            border-color: #4caf50;
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .card.wrong {
+            background: #ffcdd2;
+            border-color: #f44336;
+            animation: shake 0.5s;
+        }
+
+        .card.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .card-content {
+            font-weight: 500;
+        }
+
+        .card.korean .card-content {
+            color: #667eea;
+            font-size: 22px;
+        }
+
+        .card.chinese .card-content {
+            color: #764ba2;
+        }
+
+        .message {
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .message.success {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .message.complete {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 24px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .language-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .language-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .language-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 配對遊戲</h1>
+            <div class="controls">
+                <span>用戶: <strong>{{ username }}</strong></span>
+                <button class="btn btn-primary" onclick="startNewGame()">🔄 新遊戲</button>
+                <a href="/games" class="btn btn-secondary">← 返回選單</a>
+            </div>
+        </div>
+
+        <div class="game-container">
+            <div class="language-selector">
+                <button class="language-btn active" data-lang="korean" onclick="selectLanguage('korean')">
+                    🇰🇷 韓文單字
+                </button>
+                <button class="language-btn" data-lang="chinese" onclick="selectLanguage('chinese')">
+                    🇨🇳 中文單字
+                </button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="matched-count">0</div>
+                    <div class="stat-label">已配對</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="total-count">0</div>
+                    <div class="stat-label">總數</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="attempts">0</div>
+                    <div class="stat-label">嘗試次數</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="accuracy">100%</div>
+                    <div class="stat-label">正確率</div>
+                </div>
+            </div>
+
+            <div id="message"></div>
+            <div id="game-area"></div>
+        </div>
+    </div>
+
+    <script>
+        let words = [];
+        let selectedCards = [];
+        let matchedPairs = 0;
+        let attempts = 0;
+        let correctAttempts = 0;
+        let currentLanguage = 'korean';
+
+        // 選擇語言
+        function selectLanguage(lang) {
+            currentLanguage = lang;
+            document.querySelectorAll('.language-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            loadWords();
+        }
+
+        // 載入單字
+        async function loadWords() {
+            const gameArea = document.getElementById('game-area');
+            gameArea.innerHTML = '<div class="loading">⏳ 載入單字中...</div>';
+
+            try {
+                const endpoint = currentLanguage === 'korean'
+                    ? '/korean-app/api/saved-words'
+                    : '/chinese-app/api/saved-words';
+
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                words = data.words || [];
+
+                if (words.length === 0) {
+                    gameArea.innerHTML = `
+                        <div class="message">
+                            📚 您還沒有收藏任何${currentLanguage === 'korean' ? '韓文' : '中文'}單字<br>
+                            <a href="${currentLanguage === 'korean' ? '/korean-app' : '/chinese-app'}"
+                               class="btn btn-primary" style="margin-top: 20px;">
+                                去收藏單字
+                            </a>
+                        </div>`;
+                    return;
+                }
+
+                startNewGame();
+            } catch (error) {
+                console.error('載入單字失敗:', error);
+                gameArea.innerHTML = '<div class="message">❌ 載入單字失敗，請重新整理頁面</div>';
+            }
+        }
+
+        // 開始新遊戲
+        function startNewGame() {
+            if (words.length === 0) {
+                loadWords();
+                return;
+            }
+
+            // 重置遊戲狀態
+            selectedCards = [];
+            matchedPairs = 0;
+            attempts = 0;
+            correctAttempts = 0;
+
+            // 隨機選擇最多 8 個單字
+            const gameWords = [...words].sort(() => Math.random() - 0.5).slice(0, 8);
+
+            // 更新統計
+            document.getElementById('total-count').textContent = gameWords.length;
+            document.getElementById('matched-count').textContent = '0';
+            document.getElementById('attempts').textContent = '0';
+            document.getElementById('accuracy').textContent = '100%';
+            document.getElementById('message').innerHTML = '';
+
+            // 創建卡片
+            renderCards(gameWords);
+        }
+
+        // 渲染卡片
+        function renderCards(gameWords) {
+            const gameArea = document.getElementById('game-area');
+
+            // 準備左右兩列的卡片
+            const leftCards = gameWords.map((word, index) => ({
+                id: `left-${index}`,
+                wordId: index,
+                type: 'left',
+                content: currentLanguage === 'korean' ? word.korean : word.chinese,
+                className: 'korean'
+            }));
+
+            const rightCards = gameWords.map((word, index) => ({
+                id: `right-${index}`,
+                wordId: index,
+                type: 'right',
+                content: currentLanguage === 'korean' ? word.chinese : word.definition,
+                className: 'chinese'
+            }));
+
+            // 打亂右側卡片
+            rightCards.sort(() => Math.random() - 0.5);
+
+            // 渲染網格
+            gameArea.innerHTML = `
+                <div class="game-grid">
+                    <div class="card-column" id="left-column"></div>
+                    <div class="card-column" id="right-column"></div>
+                </div>
+            `;
+
+            const leftColumn = document.getElementById('left-column');
+            const rightColumn = document.getElementById('right-column');
+
+            leftCards.forEach(card => {
+                leftColumn.appendChild(createCardElement(card));
+            });
+
+            rightCards.forEach(card => {
+                rightColumn.appendChild(createCardElement(card));
+            });
+        }
+
+        // 創建卡片元素
+        function createCardElement(cardData) {
+            const card = document.createElement('div');
+            card.className = `card ${cardData.className}`;
+            card.dataset.id = cardData.id;
+            card.dataset.wordId = cardData.wordId;
+            card.dataset.type = cardData.type;
+            card.innerHTML = `<div class="card-content">${cardData.content}</div>`;
+            card.onclick = () => selectCard(cardData);
+            return card;
+        }
+
+        // 選擇卡片
+        function selectCard(cardData) {
+            const cardElement = document.querySelector(`[data-id="${cardData.id}"]`);
+
+            // 檢查卡片是否可選
+            if (cardElement.classList.contains('matched') ||
+                cardElement.classList.contains('disabled')) {
+                return;
+            }
+
+            // 檢查是否已選擇
+            if (selectedCards.some(c => c.id === cardData.id)) {
+                // 取消選擇
+                cardElement.classList.remove('selected');
+                selectedCards = selectedCards.filter(c => c.id !== cardData.id);
+                return;
+            }
+
+            // 檢查是否已選擇兩張
+            if (selectedCards.length >= 2) {
+                return;
+            }
+
+            // 選擇卡片
+            cardElement.classList.add('selected');
+            selectedCards.push(cardData);
+
+            // 如果選擇了兩張，檢查配對
+            if (selectedCards.length === 2) {
+                checkMatch();
+            }
+        }
+
+        // 檢查配對
+        function checkMatch() {
+            attempts++;
+            document.getElementById('attempts').textContent = attempts;
+
+            const [card1, card2] = selectedCards;
+
+            // 禁用所有卡片
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.add('disabled');
+            });
+
+            // 檢查是否配對成功（一張來自左邊，一張來自右邊，且 wordId 相同）
+            const isMatch = card1.type !== card2.type && card1.wordId === card2.wordId;
+
+            setTimeout(() => {
+                const card1Element = document.querySelector(`[data-id="${card1.id}"]`);
+                const card2Element = document.querySelector(`[data-id="${card2.id}"]`);
+
+                if (isMatch) {
+                    // 配對成功
+                    correctAttempts++;
+                    card1Element.classList.remove('selected');
+                    card2Element.classList.remove('selected');
+                    card1Element.classList.add('matched');
+                    card2Element.classList.add('matched');
+
+                    matchedPairs++;
+                    document.getElementById('matched-count').textContent = matchedPairs;
+
+                    showMessage('✅ 配對正確！', 'success');
+
+                    // 檢查是否完成
+                    if (matchedPairs === words.slice(0, 8).length) {
+                        setTimeout(() => {
+                            const accuracy = Math.round((correctAttempts / attempts) * 100);
+                            showMessage(`🎉 恭喜完成！<br>正確率: ${accuracy}%`, 'complete');
+                        }, 500);
+                    }
+                } else {
+                    // 配對錯誤
+                    card1Element.classList.add('wrong');
+                    card2Element.classList.add('wrong');
+
+                    showMessage('❌ 配對錯誤，再試一次', 'error');
+
+                    setTimeout(() => {
+                        card1Element.classList.remove('selected', 'wrong');
+                        card2Element.classList.remove('selected', 'wrong');
+                    }, 1000);
+                }
+
+                // 更新正確率
+                const accuracy = Math.round((correctAttempts / attempts) * 100);
+                document.getElementById('accuracy').textContent = accuracy + '%';
+
+                // 重新啟用未配對的卡片
+                setTimeout(() => {
+                    document.querySelectorAll('.card:not(.matched)').forEach(card => {
+                        card.classList.remove('disabled');
+                    });
+                    selectedCards = [];
+                }, 500);
+
+            }, 600);
+        }
+
+        // 顯示訊息
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = text;
+            messageDiv.className = `message ${type}`;
+
+            if (type !== 'complete') {
+                setTimeout(() => {
+                    messageDiv.innerHTML = '';
+                    messageDiv.className = 'message';
+                }, 2000);
+            }
+        }
+
+        // 頁面載入時開始遊戲
+        window.onload = () => {
+            loadWords();
+        };
+    </script>
+</body>
+</html>
