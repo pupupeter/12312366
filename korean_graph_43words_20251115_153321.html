@@ -1,0 +1,429 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>韓文詞彙知識圖譜</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .source {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .source a {
+            color: #ffeb3b;
+            text-decoration: none;
+        }
+        #graph-container {
+            width: 100%;
+            height: 80vh;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            position: relative;
+            background: rgba(255,255,255,0.05);
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 15px;
+            font: 14px sans-serif;
+            background: rgba(0,0,0,0.9);
+            border: 1px solid #fff;
+            border-radius: 8px;
+            pointer-events: none;
+            color: white;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        .tooltip .korean {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffeb3b;
+            margin-bottom: 5px;
+        }
+        .tooltip .chinese {
+            font-size: 16px;
+            color: #ff5722;
+            margin-bottom: 8px;
+        }
+        .tooltip .definition {
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        .tooltip .example {
+            font-style: italic;
+            font-size: 11px;
+            color: #ccc;
+        }
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .controls button {
+            margin: 2px;
+            padding: 5px 10px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background: #1976D2;
+        }
+        .back-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .back-button a {
+            color: #ffeb3b;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .saved-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff6b6b;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            border: 2px solid #4ecdc4;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="back-button">
+        <a href="javascript:void(0)" id="homeLink" onclick="goHome()">← 返回首頁</a>
+        <a href="javascript:void(0)" id="reviewLink" onclick="goToReview()" style="margin-left: 10px;">📚 我的收藏</a>
+    </div>
+
+    <div class="header">
+        <h1>🇰🇷 韓文詞彙知識圖譜</h1>
+        <p>互動式詞彙學習網絡 - 點擊節點查看詳細資訊</p>
+    </div>
+
+    <div class="source">
+        <strong>資料來源:</strong>
+        <a href="https://www.yna.co.kr/view/AKR20251114042800530" target="_blank">https://www.yna.co.kr/view/AKR20251114042800530</a>
+        <br>
+        <strong>共 43 個韓文詞彙</strong>
+    </div>
+
+    <div id="graph-container">
+        <div class="controls">
+            <button onclick="restartSimulation()">重新排列</button>
+            <button onclick="centerGraph()">居中顯示</button>
+        </div>
+    </div>
+
+    <script>
+        // 檢測當前路徑,自動適應代理環境
+        function getBasePath() {
+            const path = window.location.pathname;
+            if (path.startsWith('/korean-app')) {
+                return '/korean-app';
+            }
+            return '';
+        }
+
+        // 導航函數
+        function goHome() {
+            const protocol = window.location.protocol;
+            const host = window.location.host;
+            const homeUrl = `${protocol}//${host}/dashboard`;
+            console.log('Current URL:', window.location.href);
+            console.log('Navigating to dashboard:', homeUrl);
+            window.location.href = homeUrl;
+        }
+
+        function goToReview() {
+            const basePath = getBasePath();
+            const reviewUrl = basePath + '/review';
+            console.log('Navigating to review:', reviewUrl);
+            window.location.href = reviewUrl;
+        }
+
+        const nodes = [{"id": 0, "korean": "간", "chinese": "肝", "definition": "人或动物的肝脏", "example_korean": "간이 안 좋아요.", "example_chinese": "我的肝不好。", "group": 0}, {"id": 1, "korean": "수치", "chinese": "数值", "definition": "表示数量的值，指标", "example_korean": "혈압 수치가 높아요.", "example_chinese": "血压数值很高。", "group": 1}, {"id": 2, "korean": "정상", "chinese": "正常", "definition": "没有异常的状态", "example_korean": "체온이 정상이에요.", "example_chinese": "体温是正常的。", "group": 2}, {"id": 3, "korean": "이어도", "chinese": "即使，就算", "definition": "表示让步的连接词尾", "example_korean": "비가 와도 갈 거예요.", "example_chinese": "即使下雨我也要去。", "group": 3}, {"id": 4, "korean": "B형", "chinese": "B型", "definition": "B型（血型、肝炎等）", "example_korean": "B형 간염 예방 접종을 받았어요.", "example_chinese": "我接种了B型肝炎疫苗。", "group": 4}, {"id": 5, "korean": "간염", "chinese": "肝炎", "definition": "肝脏炎症", "example_korean": "간염에 걸리지 않도록 조심하세요.", "example_chinese": "小心不要得肝炎。", "group": 0}, {"id": 6, "korean": "바이러스", "chinese": "病毒", "definition": "引起疾病的微生物", "example_korean": "바이러스 감염을 예방해야 해요.", "example_chinese": "需要预防病毒感染。", "group": 1}, {"id": 7, "korean": "많다면", "chinese": "如果多的话", "definition": "表示假设的条件", "example_korean": "돈이 많다면 세계 여행을 하고 싶어요.", "example_chinese": "如果有很多钱，我想去世界旅行。", "group": 2}, {"id": 8, "korean": "조기", "chinese": "早期", "definition": "事情发生的初期", "example_korean": "조기 발견이 중요해요.", "example_chinese": "早期发现很重要。", "group": 3}, {"id": 9, "korean": "치료", "chinese": "治疗", "definition": "为了恢复健康而采取的措施", "example_korean": "치료를 받아야 해요.", "example_chinese": "需要接受治疗。", "group": 4}, {"id": 10, "korean": "해야", "chinese": "必须，应该", "definition": "表示义务或必要性的表达方式", "example_korean": "숙제를 해야 해요.", "example_chinese": "我必须做作业。", "group": 0}, {"id": 11, "korean": "국가", "chinese": "国家", "definition": "拥有特定领土和主权的政治共同体", "example_korean": "우리나라는 대한민국입니다.", "example_chinese": "我们的国家是大韩民国。", "group": 1}, {"id": 12, "korean": "기간", "chinese": "期间", "definition": "一段时间", "example_korean": "방학 기간 동안 여행을 갔어요.", "example_chinese": "放假期间去旅行了。", "group": 2}, {"id": 13, "korean": "뉴스", "chinese": "新闻", "definition": "报道新近发生的事情的信息", "example_korean": "오늘 뉴스에서 봤어요.", "example_chinese": "我今天在新闻上看到了。", "group": 3}, {"id": 14, "korean": "통신사", "chinese": "通讯社", "definition": "提供新闻和信息的机构", "example_korean": "연합뉴스는 한국의 대표적인 통신사입니다.", "example_chinese": "韩联社是韩国具有代表性的通讯社。", "group": 4}, {"id": 15, "korean": "최신", "chinese": "最新", "definition": "最近的，最新的", "example_korean": "최신 휴대폰을 샀어요.", "example_chinese": "我买了最新款的手机。", "group": 0}, {"id": 16, "korean": "정치", "chinese": "政治", "definition": "国家或社会管理活动", "example_korean": "정치에 관심이 많아요.", "example_chinese": "我对政治很感兴趣。", "group": 1}, {"id": 17, "korean": "북한", "chinese": "朝鲜", "definition": "朝鲜民主主义人民共和国", "example_korean": "북한 관련 뉴스를 자주 봐요.", "example_chinese": "我经常看关于朝鲜的新闻。", "group": 2}, {"id": 18, "korean": "경제", "chinese": "经济", "definition": "生产、分配、消费等经济活动", "example_korean": "경제 상황이 안 좋아요.", "example_chinese": "经济情况不好。", "group": 3}, {"id": 19, "korean": "산업", "chinese": "产业", "definition": "大规模生产的行业", "example_korean": "자동차 산업이 발전하고 있어요.", "example_chinese": "汽车产业正在发展。", "group": 4}, {"id": 20, "korean": "사회", "chinese": "社会", "definition": "由人组成的集体", "example_korean": "사회 문제에 대해 생각해 봐야 해요.", "example_chinese": "需要考虑社会问题。", "group": 0}, {"id": 21, "korean": "전국", "chinese": "全国", "definition": "整个国家", "example_korean": "전국적으로 비가 왔어요.", "example_chinese": "全国都下雨了。", "group": 1}, {"id": 22, "korean": "세계", "chinese": "世界", "definition": "地球上的所有国家和地区", "example_korean": "세계 여행을 가고 싶어요.", "example_chinese": "我想去世界旅行。", "group": 2}, {"id": 23, "korean": "문화", "chinese": "文化", "definition": "人类创造的所有精神和物质财富", "example_korean": "한국 문화에 관심이 많아요.", "example_chinese": "我对韩国文化很感兴趣。", "group": 3}, {"id": 24, "korean": "건강", "chinese": "健康", "definition": "身体、精神和社会适应的良好状态", "example_korean": "건강이 제일 중요해요.", "example_chinese": "健康最重要。", "group": 4}, {"id": 25, "korean": "연예", "chinese": "演艺", "definition": "电影、电视、音乐等娱乐活动", "example_korean": "연예인들이 많이 출연했어요.", "example_chinese": "很多艺人出演了。", "group": 0}, {"id": 26, "korean": "스포츠", "chinese": "体育", "definition": "体育运动", "example_korean": "스포츠를 즐겨 봐요.", "example_chinese": "我喜欢看体育比赛。", "group": 1}, {"id": 27, "korean": "제보", "chinese": "举报", "definition": "向有关部门报告不法行为", "example_korean": "비리 제보를 받았어요.", "example_chinese": "收到了不正之风的举报。", "group": 2}, {"id": 28, "korean": "검색창", "chinese": "搜索栏", "definition": "用于输入搜索关键词的输入框", "example_korean": "검색창에 검색어를 입력하세요.", "example_chinese": "请在搜索栏输入搜索词。", "group": 3}, {"id": 29, "korean": "수치", "chinese": "数值", "definition": "表示数量的值，指标", "example_korean": "혈액 검사 수치가 높게 나왔어요.", "example_chinese": "血液检查数值很高。", "group": 4}, {"id": 30, "korean": "환자", "chinese": "患者", "definition": "生病的人", "example_korean": "환자를 간호해야 해요.", "example_chinese": "需要照顾患者。", "group": 0}, {"id": 31, "korean": "결과", "chinese": "结果", "definition": "最终的结局", "example_korean": "노력의 결과가 나타났어요.", "example_chinese": "努力的结果显现出来了。", "group": 1}, {"id": 32, "korean": "연구", "chinese": "研究", "definition": "深入调查和分析", "example_korean": "새로운 연구가 진행 중이에요.", "example_chinese": "正在进行新的研究。", "group": 2}, {"id": 33, "korean": "의미", "chinese": "意义", "definition": "存在的理由或价值", "example_korean": "이 단어의 의미를 모르겠어요.", "example_chinese": "我不知道这个单词的意义。", "group": 3}, {"id": 34, "korean": "혈액", "chinese": "血液", "definition": "人体内循环的液体", "example_korean": "헌혈을 하러 갔어요.", "example_chinese": "我去献血了。", "group": 4}, {"id": 35, "korean": "속", "chinese": "里面", "definition": "内部空间", "example_korean": "가방 속에 책이 있어요.", "example_chinese": "包里有书。", "group": 0}, {"id": 36, "korean": "효과", "chinese": "效果", "definition": "产生的良好影响", "example_korean": "약의 효과가 나타났어요.", "example_chinese": "药效显现出来了。", "group": 1}, {"id": 37, "korean": "유병률", "chinese": "患病率", "definition": "特定时间内特定人群中患病人数的比例", "example_korean": "만성 질환의 유병률이 높아요.", "example_chinese": "慢性疾病的患病率很高。", "group": 2}, {"id": 38, "korean": "비율", "chinese": "比例", "definition": "部分占整体的比重", "example_korean": "성공 비율이 낮아요.", "example_chinese": "成功的比例很低。", "group": 3}, {"id": 39, "korean": "원인", "chinese": "原因", "definition": "引起某种结果的因素", "example_korean": "사고의 원인을 조사하고 있어요.", "example_chinese": "正在调查事故的原因。", "group": 4}, {"id": 40, "korean": "기준", "chinese": "标准", "definition": "衡量事物的准则", "example_korean": "평가 기준이 엄격해요.", "example_chinese": "评估标准很严格。", "group": 0}, {"id": 41, "korean": "필요하다", "chinese": "需要", "definition": "必须具备或不可缺少", "example_korean": "도움이 필요하면 말하세요.", "example_chinese": "如果需要帮助请说。", "group": 1}, {"id": 42, "korean": "건보", "chinese": "医保", "definition": "医疗保险", "example_korean": "건보 혜택을 받을 수 있어요.", "example_chinese": "可以享受医保优惠。", "group": 2}];
+        const links = [{"source": 0, "target": 38, "value": 1}, {"source": 0, "target": 30, "value": 3}, {"source": 0, "target": 15, "value": 2}, {"source": 1, "target": 30, "value": 1}, {"source": 1, "target": 41, "value": 2}, {"source": 1, "target": 9, "value": 2}, {"source": 2, "target": 22, "value": 1}, {"source": 2, "target": 0, "value": 1}, {"source": 2, "target": 15, "value": 2}, {"source": 3, "target": 5, "value": 3}, {"source": 3, "target": 8, "value": 3}, {"source": 3, "target": 38, "value": 1}, {"source": 4, "target": 12, "value": 3}, {"source": 4, "target": 26, "value": 3}, {"source": 4, "target": 41, "value": 2}, {"source": 5, "target": 23, "value": 2}, {"source": 5, "target": 24, "value": 1}, {"source": 5, "target": 26, "value": 2}, {"source": 6, "target": 1, "value": 1}, {"source": 6, "target": 15, "value": 1}, {"source": 6, "target": 4, "value": 1}, {"source": 7, "target": 30, "value": 1}, {"source": 7, "target": 35, "value": 1}, {"source": 8, "target": 23, "value": 1}, {"source": 8, "target": 19, "value": 1}, {"source": 8, "target": 0, "value": 3}, {"source": 9, "target": 40, "value": 3}, {"source": 9, "target": 29, "value": 3}, {"source": 10, "target": 25, "value": 3}, {"source": 10, "target": 1, "value": 3}, {"source": 10, "target": 2, "value": 1}, {"source": 11, "target": 27, "value": 1}, {"source": 11, "target": 31, "value": 2}, {"source": 11, "target": 7, "value": 1}, {"source": 12, "target": 35, "value": 1}, {"source": 12, "target": 19, "value": 3}, {"source": 12, "target": 25, "value": 3}, {"source": 13, "target": 19, "value": 2}, {"source": 13, "target": 41, "value": 1}, {"source": 14, "target": 1, "value": 2}, {"source": 14, "target": 31, "value": 1}, {"source": 14, "target": 34, "value": 3}, {"source": 15, "target": 26, "value": 2}, {"source": 15, "target": 10, "value": 2}, {"source": 15, "target": 5, "value": 2}, {"source": 16, "target": 18, "value": 2}, {"source": 16, "target": 7, "value": 3}, {"source": 16, "target": 42, "value": 1}, {"source": 17, "target": 27, "value": 3}, {"source": 17, "target": 36, "value": 3}, {"source": 17, "target": 9, "value": 1}, {"source": 18, "target": 35, "value": 2}, {"source": 18, "target": 26, "value": 3}, {"source": 18, "target": 12, "value": 2}, {"source": 19, "target": 41, "value": 2}, {"source": 19, "target": 13, "value": 3}, {"source": 19, "target": 11, "value": 1}, {"source": 20, "target": 34, "value": 2}, {"source": 20, "target": 38, "value": 2}, {"source": 20, "target": 0, "value": 1}, {"source": 21, "target": 2, "value": 1}, {"source": 21, "target": 6, "value": 1}, {"source": 21, "target": 20, "value": 3}, {"source": 22, "target": 33, "value": 1}, {"source": 22, "target": 38, "value": 1}, {"source": 22, "target": 1, "value": 2}, {"source": 23, "target": 29, "value": 2}, {"source": 23, "target": 37, "value": 2}, {"source": 23, "target": 36, "value": 1}, {"source": 24, "target": 39, "value": 1}, {"source": 24, "target": 37, "value": 3}, {"source": 24, "target": 17, "value": 1}, {"source": 25, "target": 21, "value": 2}, {"source": 25, "target": 35, "value": 2}, {"source": 25, "target": 40, "value": 3}, {"source": 26, "target": 33, "value": 3}, {"source": 26, "target": 29, "value": 2}, {"source": 26, "target": 25, "value": 3}, {"source": 27, "target": 37, "value": 2}, {"source": 27, "target": 2, "value": 1}, {"source": 27, "target": 28, "value": 1}, {"source": 28, "target": 10, "value": 2}, {"source": 28, "target": 9, "value": 3}, {"source": 28, "target": 36, "value": 2}, {"source": 29, "target": 12, "value": 1}, {"source": 29, "target": 8, "value": 2}, {"source": 29, "target": 17, "value": 3}, {"source": 30, "target": 27, "value": 2}, {"source": 30, "target": 33, "value": 1}, {"source": 30, "target": 14, "value": 3}, {"source": 31, "target": 24, "value": 3}, {"source": 31, "target": 39, "value": 2}, {"source": 31, "target": 18, "value": 3}, {"source": 32, "target": 30, "value": 3}, {"source": 32, "target": 1, "value": 1}, {"source": 32, "target": 16, "value": 1}, {"source": 33, "target": 34, "value": 2}, {"source": 33, "target": 18, "value": 1}, {"source": 33, "target": 14, "value": 2}, {"source": 34, "target": 26, "value": 2}, {"source": 34, "target": 42, "value": 1}, {"source": 34, "target": 3, "value": 1}, {"source": 35, "target": 0, "value": 1}, {"source": 35, "target": 22, "value": 3}, {"source": 35, "target": 24, "value": 3}, {"source": 36, "target": 10, "value": 1}, {"source": 36, "target": 42, "value": 1}, {"source": 36, "target": 31, "value": 3}, {"source": 37, "target": 27, "value": 1}, {"source": 37, "target": 40, "value": 1}, {"source": 37, "target": 1, "value": 3}, {"source": 38, "target": 26, "value": 3}, {"source": 38, "target": 18, "value": 1}, {"source": 38, "target": 27, "value": 2}, {"source": 39, "target": 30, "value": 1}, {"source": 39, "target": 1, "value": 3}, {"source": 39, "target": 42, "value": 1}, {"source": 40, "target": 9, "value": 3}, {"source": 40, "target": 17, "value": 2}, {"source": 40, "target": 10, "value": 3}, {"source": 41, "target": 36, "value": 1}, {"source": 41, "target": 25, "value": 3}, {"source": 41, "target": 13, "value": 3}, {"source": 42, "target": 35, "value": 1}, {"source": 42, "target": 36, "value": 2}, {"source": 42, "target": 5, "value": 2}];
+
+        const width = document.getElementById('graph-container').clientWidth;
+        const height = document.getElementById('graph-container').clientHeight;
+
+        const svg = d3.select("#graph-container")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const g = svg.append("g");
+
+        // 添加縮放功能
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on('zoom', function(event) {
+                g.attr('transform', event.transform);
+            });
+
+        svg.call(zoom);
+
+        // 顏色比例尺
+        const color = d3.scaleOrdinal()
+            .domain([0, 1, 2, 3, 4])
+            .range(['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']);
+
+        // 力模擬
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-400))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide().radius(40));
+
+        // 創建連接線
+        const link = g.append("g")
+            .selectAll("line")
+            .data(links)
+            .enter().append("line")
+            .attr("stroke", "rgba(255,255,255,0.3)")
+            .attr("stroke-width", d => Math.sqrt(d.value) * 2);
+
+        // 創建節點
+        const node = g.append("g")
+            .selectAll("g")
+            .data(nodes)
+            .enter().append("g")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        // 節點圓圈
+        node.append("circle")
+            .attr("r", 25)
+            .attr("fill", d => color(d.group))
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 3);
+
+        // 節點文字（韓文）
+        node.append("text")
+            .text(d => d.korean)
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .attr("font-size", "12px")
+            .attr("font-weight", "bold")
+            .attr("fill", "white")
+            .attr("pointer-events", "none");
+
+        // 中文翻譯標籤
+        node.append("text")
+            .text(d => d.chinese)
+            .attr("x", 0)
+            .attr("y", 35)
+            .attr("text-anchor", "middle")
+            .attr("font-size", "10px")
+            .attr("fill", "#ffeb3b")
+            .attr("pointer-events", "none");
+
+        // 工具提示
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        // 顯示通知
+        function showNotification(message, isSuccess = true) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.borderColor = isSuccess ? '#4ecdc4' : '#ff6b6b';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 收藏單字功能
+        function saveWord(wordData) {
+            const basePath = getBasePath();
+            fetch(`${basePath}/api/saved-words`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ word: wordData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    showNotification('⚠️ 單字已在收藏中', false);
+                } else {
+                    showNotification('✅ 單字已收藏！');
+                    // 標記此節點為已收藏
+                    markNodeAsSaved(wordData.korean);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('❌ 收藏失敗', false);
+            });
+        }
+
+        // 標記節點為已收藏
+        function markNodeAsSaved(korean) {
+            node.each(function(d) {
+                if (d.korean === korean) {
+                    const nodeGroup = d3.select(this);
+                    // 檢查是否已有標記
+                    if (nodeGroup.select('.saved-indicator').empty()) {
+                        nodeGroup.append('text')
+                            .attr('class', 'saved-indicator')
+                            .text('⭐')
+                            .attr('x', 20)
+                            .attr('y', -20)
+                            .attr('font-size', '16px')
+                            .attr('pointer-events', 'none');
+                    }
+                }
+            });
+        }
+
+        // 載入已收藏的單字並標記
+        (function() {
+            const basePath = getBasePath();
+            fetch(`${basePath}/api/saved-words`)
+                .then(response => response.json())
+                .then(data => {
+                    const savedKoreans = data.words.map(w => w.korean);
+                    savedKoreans.forEach(korean => {
+                        markNodeAsSaved(korean);
+                    });
+                })
+                .catch(error => console.error('Error loading saved words:', error));
+        })();
+
+        // 節點事件
+        node.on("mouseover", function(event, d) {
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", .9);
+            tooltip.html(`
+                <div class="korean">${d.korean}</div>
+                <div class="chinese">${d.chinese}</div>
+                <div class="definition"><strong>定義:</strong> ${d.definition}</div>
+                <div class="example"><strong>例句:</strong> ${d.example_korean}</div>
+                <div class="example"><strong>翻譯:</strong> ${d.example_chinese}</div>
+                <div style="margin-top: 10px; font-size: 10px; color: #4ecdc4;">💡 雙擊節點收藏單字</div>
+            `)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            tooltip.transition()
+                .duration(500)
+                .style("opacity", 0);
+        })
+        .on("dblclick", function(event, d) {
+            event.stopPropagation();
+            saveWord({
+                korean: d.korean,
+                chinese: d.chinese,
+                definition: d.definition,
+                example_korean: d.example_korean,
+                example_chinese: d.example_chinese
+            });
+        });
+
+        // 模擬更新
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        // 拖拽功能
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        // 控制功能
+        function restartSimulation() {
+            simulation.alpha(1).restart();
+        }
+
+        function centerGraph() {
+            const transform = d3.zoomIdentity.translate(width / 2, height / 2).scale(1);
+            svg.transition().duration(750).call(zoom.transform, transform);
+        }
+    </script>
+</body>
+</html>
+    
