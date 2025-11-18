@@ -7,7 +7,7 @@
 
 
 ------------------------------
-帳號密碼的部分從mangodb放到vercel
+帳號密碼的部分從mangodb放到supabase(不要用mangodb了)這樣才可以放vercel
 
 
 
