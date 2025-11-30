@@ -1,6 +1,6 @@
 
 
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response, send_file
 from pymongo import MongoClient
 import hashlib
 import os
@@ -12,7 +12,22 @@ import sys
 import requests
 import re
 import urllib.parse
+import io
+import wave
 from translations import get_translation
+from dotenv import load_dotenv
+
+# 載入環境變數
+load_dotenv()
+
+# Gemini TTS 相關
+try:
+    from google import genai
+    from google.genai import types
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    print("Warning: google-genai not installed, Gemini TTS will not be available")
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # 用於 session 加密
@@ -662,6 +677,96 @@ def typing_game():
     if 'username' not in session:
         return redirect(url_for('login'))
     return render_template('games/typing.html', username=session['username'])
+
+# 聽力遊戲頁面
+@app.route('/games/listening')
+def listening_game():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('games/listening.html', username=session['username'])
+
+# ==================== 單字 TTS API ====================
+
+def create_wave_file(pcm_data, channels=1, rate=24000, sample_width=2):
+    """將 PCM 資料轉換為 WAV 格式"""
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wf:
+        wf.setnchannels(channels)
+        wf.setsampwidth(sample_width)
+        wf.setframerate(rate)
+        wf.writeframes(pcm_data)
+    buffer.seek(0)
+    return buffer
+
+@app.route('/api/tts/speak', methods=['POST'])
+def tts_speak():
+    """生成單字語音的 API"""
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    if not GEMINI_AVAILABLE:
+        return jsonify({'error': 'Gemini TTS not available'}), 503
+
+    try:
+        data = request.json
+        text = data.get('text', '')
+        lang = data.get('lang', 'zh')  # 'zh' 或 'ko'
+
+        if not text:
+            return jsonify({'error': 'Text is required'}), 400
+
+        # 取得 API key
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            return jsonify({'error': 'GEMINI_API_KEY not configured'}), 500
+
+        # 建立 Gemini 客戶端
+        client = genai.Client(api_key=api_key)
+
+        # 選擇適合的語音
+        voice_name = "Kore"  # 預設語音，支援多語言
+
+        # 生成語音
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-preview-tts",
+            contents=text,
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=types.SpeechConfig(
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                            voice_name=voice_name,
+                        )
+                    )
+                )
+            )
+        )
+
+        # 取得音頻資料
+        audio_data = response.candidates[0].content.parts[0].inline_data.data
+
+        # 轉換為 WAV
+        wav_buffer = create_wave_file(audio_data)
+
+        return send_file(
+            wav_buffer,
+            mimetype='audio/wav',
+            as_attachment=False
+        )
+
+    except Exception as e:
+        print(f"TTS Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tts/check')
+def tts_check():
+    """檢查 TTS 是否可用"""
+    api_key = os.getenv('GEMINI_API_KEY')
+    return jsonify({
+        'available': GEMINI_AVAILABLE and bool(api_key),
+        'gemini_installed': GEMINI_AVAILABLE,
+        'api_key_configured': bool(api_key)
+    })
 
 # TTS 頁面 (嵌入 Streamlit)
 @app.route('/tts')

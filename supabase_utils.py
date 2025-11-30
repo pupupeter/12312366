@@ -67,6 +67,7 @@ def add_korean_word(user_id: str, word_data: Dict) -> Dict:
             'definition': word_data.get('definition'),
             'example_korean': word_data.get('example_korean'),
             'example_chinese': word_data.get('example_chinese'),
+            'level': word_data.get('level', '未分級'),
             'saved_at': datetime.now().isoformat()
         }
 

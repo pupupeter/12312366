@@ -20,7 +20,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -84,6 +84,94 @@
             margin-top: 5px;
         }
 
+        /* 視圖切換按鈕 */
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .view-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .view-btn.active {
+            background: #4ecdc4;
+            border-color: #4ecdc4;
+        }
+
+        /* 匯出區塊 */
+        .export-section {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .export-btn {
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .export-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .select-all-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .select-all-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .selected-count {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        /* 卡片視圖 */
         .words-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -107,11 +195,27 @@
             border-color: #4ecdc4;
         }
 
+        .word-card.selected {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.2);
+        }
+
+        .word-card .card-checkbox {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #28a745;
+        }
+
         .word-card .korean {
             font-size: 2em;
             font-weight: bold;
             color: #ffeb3b;
             margin-bottom: 10px;
+            margin-left: 35px;
         }
 
         .word-card .chinese {
@@ -174,6 +278,119 @@
         .delete-btn:hover {
             background: #ff6b6b;
             transform: scale(1.1);
+        }
+
+        /* 表格視圖 - Excel 風格 */
+        .words-table-container {
+            display: none;
+            overflow-x: auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .words-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .words-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        .words-table th:first-child {
+            border-top-left-radius: 15px;
+        }
+
+        .words-table th:last-child {
+            border-top-right-radius: 15px;
+        }
+
+        .words-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            vertical-align: top;
+        }
+
+        .words-table tr:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .words-table tr.selected {
+            background: rgba(40, 167, 69, 0.15);
+        }
+
+        .words-table .row-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #28a745;
+        }
+
+        .words-table .col-korean {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .words-table .col-chinese {
+            color: #e74c3c;
+            font-weight: 500;
+        }
+
+        .words-table .col-level {
+            text-align: center;
+        }
+
+        .words-table .level-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .words-table .col-definition {
+            max-width: 250px;
+            line-height: 1.5;
+        }
+
+        .words-table .col-example {
+            max-width: 300px;
+            font-style: italic;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .words-table .col-actions {
+            text-align: center;
+        }
+
+        .words-table .delete-btn-small {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .words-table .delete-btn-small:hover {
+            background: #e74c3c;
         }
 
         .empty-state {
@@ -241,6 +458,87 @@
             outline: none;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
         }
+
+        /* 匯出選項 Modal */
+        .export-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .export-modal.show {
+            display: flex;
+        }
+
+        .export-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            color: #333;
+        }
+
+        .export-modal-content h3 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .export-options {
+            margin-bottom: 20px;
+        }
+
+        .export-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .export-option input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+        }
+
+        .export-modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .modal-btn.confirm {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -257,17 +555,92 @@
                 <div class="number" id="totalWords">0</div>
                 <div class="label">收藏單字</div>
             </div>
+            <div class="stat-card">
+                <div class="number" id="selectedCount">0</div>
+                <div class="label">已勾選</div>
+            </div>
+        </div>
+
+        <!-- 視圖切換 -->
+        <div class="view-toggle">
+            <button class="view-btn active" id="cardViewBtn" onclick="switchView('card')">📋 卡片視圖</button>
+            <button class="view-btn" id="tableViewBtn" onclick="switchView('table')">📊 表格視圖</button>
         </div>
 
         <input type="text" id="searchBox" class="search-box" placeholder="🔍 搜尋單字...">
 
+        <!-- 匯出區塊 -->
+        <div class="export-section">
+            <span class="selected-count">已選擇: <strong id="selectedCountText">0</strong> 個單字</span>
+            <button class="select-all-btn" id="selectAllBtn" onclick="toggleSelectAll()">全選</button>
+            <button class="export-btn" id="exportBtn" onclick="openExportModal()">
+                📥 匯出 Excel
+            </button>
+        </div>
+
+        <!-- 卡片視圖容器 -->
         <div id="wordsContainer" class="loading">
             載入中...
+        </div>
+
+        <!-- 表格視圖容器 -->
+        <div id="tableContainer" class="words-table-container">
+            <table class="words-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="headerCheckbox" onchange="toggleSelectAll()"></th>
+                        <th>單字</th>
+                        <th>中文翻譯</th>
+                        <th>級數</th>
+                        <th>定義</th>
+                        <th>例句</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 匯出選項 Modal -->
+    <div class="export-modal" id="exportModal">
+        <div class="export-modal-content">
+            <h3>📥 匯出設定</h3>
+            <p style="margin-bottom: 15px; color: #666;">選擇要匯出的欄位：</p>
+            <div class="export-options">
+                <div class="export-option">
+                    <input type="checkbox" id="exportKorean" checked disabled>
+                    <label for="exportKorean">單字 (必選)</label>
+                </div>
+                <div class="export-option">
+                    <input type="checkbox" id="exportChinese" checked>
+                    <label for="exportChinese">中文翻譯</label>
+                </div>
+                <div class="export-option">
+                    <input type="checkbox" id="exportLevel" checked>
+                    <label for="exportLevel">級數</label>
+                </div>
+                <div class="export-option">
+                    <input type="checkbox" id="exportDefinition" checked>
+                    <label for="exportDefinition">英文解釋/定義</label>
+                </div>
+                <div class="export-option">
+                    <input type="checkbox" id="exportExample">
+                    <label for="exportExample">例句 (可選)</label>
+                </div>
+            </div>
+            <div class="export-modal-buttons">
+                <button class="modal-btn cancel" onclick="closeExportModal()">取消</button>
+                <button class="modal-btn confirm" onclick="exportToExcel()">確認匯出</button>
+            </div>
         </div>
     </div>
 
     <script>
         let allWords = [];
+        let selectedWords = new Set();
+        let currentView = 'card';
 
         // 檢測當前路徑,自動適應代理環境
         function getBasePath() {
@@ -314,6 +687,7 @@
             .then(response => response.json())
             .then(data => {
                 showNotification('✅ 單字已移除');
+                selectedWords.delete(korean);
                 loadWords();
             })
             .catch(error => {
@@ -344,7 +718,100 @@
             }, 3000);
         }
 
-        function renderWords(words) {
+        // 更新已選數量
+        function updateSelectedCount() {
+            const count = selectedWords.size;
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('selectedCountText').textContent = count;
+
+            // 更新全選按鈕文字
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const headerCheckbox = document.getElementById('headerCheckbox');
+            if (count === allWords.length && allWords.length > 0) {
+                selectAllBtn.textContent = '取消全選';
+                if (headerCheckbox) headerCheckbox.checked = true;
+            } else {
+                selectAllBtn.textContent = '全選';
+                if (headerCheckbox) headerCheckbox.checked = false;
+            }
+        }
+
+        // 切換單字選擇狀態
+        function toggleWordSelection(korean, checkbox) {
+            if (selectedWords.has(korean)) {
+                selectedWords.delete(korean);
+            } else {
+                selectedWords.add(korean);
+            }
+
+            // 更新卡片和表格行的選擇樣式
+            updateSelectionStyles();
+            updateSelectedCount();
+        }
+
+        // 更新選擇樣式
+        function updateSelectionStyles() {
+            // 更新卡片視圖
+            document.querySelectorAll('.word-card').forEach(card => {
+                const korean = card.dataset.korean;
+                const checkbox = card.querySelector('.card-checkbox');
+                if (selectedWords.has(korean)) {
+                    card.classList.add('selected');
+                    if (checkbox) checkbox.checked = true;
+                } else {
+                    card.classList.remove('selected');
+                    if (checkbox) checkbox.checked = false;
+                }
+            });
+
+            // 更新表格視圖
+            document.querySelectorAll('.words-table tbody tr').forEach(row => {
+                const korean = row.dataset.korean;
+                const checkbox = row.querySelector('.row-checkbox');
+                if (selectedWords.has(korean)) {
+                    row.classList.add('selected');
+                    if (checkbox) checkbox.checked = true;
+                } else {
+                    row.classList.remove('selected');
+                    if (checkbox) checkbox.checked = false;
+                }
+            });
+        }
+
+        // 全選/取消全選
+        function toggleSelectAll() {
+            if (selectedWords.size === allWords.length) {
+                selectedWords.clear();
+            } else {
+                allWords.forEach(word => selectedWords.add(word.korean));
+            }
+            updateSelectionStyles();
+            updateSelectedCount();
+        }
+
+        // 切換視圖
+        function switchView(view) {
+            currentView = view;
+            const cardContainer = document.getElementById('wordsContainer');
+            const tableContainer = document.getElementById('tableContainer');
+            const cardBtn = document.getElementById('cardViewBtn');
+            const tableBtn = document.getElementById('tableViewBtn');
+
+            if (view === 'card') {
+                cardContainer.style.display = '';
+                tableContainer.style.display = 'none';
+                cardBtn.classList.add('active');
+                tableBtn.classList.remove('active');
+            } else {
+                cardContainer.style.display = 'none';
+                tableContainer.style.display = 'block';
+                cardBtn.classList.remove('active');
+                tableBtn.classList.add('active');
+            }
+        }
+
+        // 渲染卡片視圖
+        function renderCards(words) {
             const container = document.getElementById('wordsContainer');
 
             if (words.length === 0) {
@@ -364,20 +831,78 @@
 
             words.forEach(word => {
                 const card = document.createElement('div');
-                card.className = 'word-card';
+                card.className = 'word-card' + (selectedWords.has(word.korean) ? ' selected' : '');
+                card.dataset.korean = word.korean;
+                const level = word.level || '未分級';
                 card.innerHTML = `
+                    <input type="checkbox" class="card-checkbox"
+                           ${selectedWords.has(word.korean) ? 'checked' : ''}
+                           onchange="toggleWordSelection('${word.korean.replace(/'/g, "\\'")}', this)">
                     <button class="delete-btn" onclick="deleteWord('${word.korean.replace(/'/g, "\\'")}')">×</button>
                     <div class="korean">${word.korean}</div>
                     <div class="chinese">${word.chinese}</div>
                     <div class="definition"><strong>定義：</strong>${word.definition}</div>
+                    <div style="margin-top: 10px; font-size: 0.85em; color: #4ecdc4;"><strong>級數：</strong>${level}</div>
                     <div class="example">
-                        <div class="example-korean"><strong>例句：</strong>${word.example_korean}</div>
-                        <div class="example-chinese"><strong>翻譯：</strong>${word.example_chinese}</div>
+                        <div class="example-korean"><strong>例句：</strong>${word.example_korean || '無'}</div>
+                        <div class="example-chinese"><strong>翻譯：</strong>${word.example_chinese || '無'}</div>
                     </div>
                     <div class="timestamp">${formatDate(word.saved_at)}</div>
                 `;
                 container.appendChild(card);
             });
+        }
+
+        // 渲染表格視圖
+        function renderTable(words) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (words.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                            還沒有收藏的單字
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            words.forEach(word => {
+                const row = document.createElement('tr');
+                row.dataset.korean = word.korean;
+                if (selectedWords.has(word.korean)) {
+                    row.classList.add('selected');
+                }
+                const level = word.level || '未分級';
+                const exampleText = word.example_korean ?
+                    `${word.example_korean}<br><small style="color:#999;">${word.example_chinese || ''}</small>` :
+                    '<span style="color:#999;">無</span>';
+
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="row-checkbox"
+                               ${selectedWords.has(word.korean) ? 'checked' : ''}
+                               onchange="toggleWordSelection('${word.korean.replace(/'/g, "\\'")}', this)">
+                    </td>
+                    <td class="col-korean">${word.korean}</td>
+                    <td class="col-chinese">${word.chinese}</td>
+                    <td class="col-level"><span class="level-badge">${level}</span></td>
+                    <td class="col-definition">${word.definition}</td>
+                    <td class="col-example">${exampleText}</td>
+                    <td class="col-actions">
+                        <button class="delete-btn-small" onclick="deleteWord('${word.korean.replace(/'/g, "\\'")}')">刪除</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 渲染兩種視圖
+        function renderWords(words) {
+            renderCards(words);
+            renderTable(words);
         }
 
         function filterWords(searchTerm) {
@@ -405,6 +930,7 @@
                     allWords = data.words;
                     document.getElementById('totalWords').textContent = allWords.length;
                     renderWords(allWords);
+                    updateSelectedCount();
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -416,6 +942,89 @@
                         </div>
                     `;
                 });
+        }
+
+        // 匯出 Modal 控制
+        function openExportModal() {
+            if (selectedWords.size === 0) {
+                showNotification('請先勾選要匯出的單字', false);
+                return;
+            }
+            document.getElementById('exportModal').classList.add('show');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('show');
+        }
+
+        // 點擊 Modal 外部關閉
+        document.getElementById('exportModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeExportModal();
+            }
+        });
+
+        // 匯出到 Excel
+        function exportToExcel() {
+            const includeChinese = document.getElementById('exportChinese').checked;
+            const includeLevel = document.getElementById('exportLevel').checked;
+            const includeDefinition = document.getElementById('exportDefinition').checked;
+            const includeExample = document.getElementById('exportExample').checked;
+
+            // 過濾已選擇的單字
+            const wordsToExport = allWords.filter(word => selectedWords.has(word.korean));
+
+            if (wordsToExport.length === 0) {
+                showNotification('沒有選擇任何單字', false);
+                return;
+            }
+
+            // 建立 CSV 內容 (Excel 可直接開啟)
+            let headers = ['單字'];
+            if (includeChinese) headers.push('中文翻譯');
+            if (includeLevel) headers.push('級數');
+            if (includeDefinition) headers.push('定義/解釋');
+            if (includeExample) {
+                headers.push('例句');
+                headers.push('例句翻譯');
+            }
+
+            let csvContent = '\ufeff'; // BOM for UTF-8
+            csvContent += headers.join(',') + '\n';
+
+            wordsToExport.forEach(word => {
+                let row = [`"${(word.korean || '').replace(/"/g, '""')}"`];
+                if (includeChinese) row.push(`"${(word.chinese || '').replace(/"/g, '""')}"`);
+                if (includeLevel) row.push(`"${(word.level || '未分級').replace(/"/g, '""')}"`);
+                if (includeDefinition) row.push(`"${(word.definition || '').replace(/"/g, '""')}"`);
+                if (includeExample) {
+                    row.push(`"${(word.example_korean || '').replace(/"/g, '""')}"`);
+                    row.push(`"${(word.example_chinese || '').replace(/"/g, '""')}"`);
+                }
+                csvContent += row.join(',') + '\n';
+            });
+
+            // 建立並下載檔案
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+
+            const now = new Date();
+            const timestamp = now.getFullYear() +
+                String(now.getMonth() + 1).padStart(2, '0') +
+                String(now.getDate()).padStart(2, '0') + '_' +
+                String(now.getHours()).padStart(2, '0') +
+                String(now.getMinutes()).padStart(2, '0');
+
+            link.setAttribute('href', url);
+            link.setAttribute('download', `韓文單字_${wordsToExport.length}個_${timestamp}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            closeExportModal();
+            showNotification(`✅ 成功匯出 ${wordsToExport.length} 個單字！`);
         }
 
         // 搜尋功能
