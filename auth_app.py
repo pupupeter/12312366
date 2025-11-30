@@ -1,7 +1,6 @@
 
 
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response, send_file
-from pymongo import MongoClient
 import hashlib
 import os
 from datetime import datetime
@@ -20,6 +19,18 @@ from dotenv import load_dotenv
 # 載入環境變數
 load_dotenv()
 
+# Supabase 用戶操作
+from supabase_utils import (
+    get_user_by_username,
+    get_user_by_email,
+    create_user,
+    update_user,
+    update_user_password,
+    update_user_language,
+    update_last_login,
+    check_email_exists
+)
+
 # Gemini TTS 相關
 try:
     from google import genai
@@ -30,15 +41,10 @@ except ImportError:
     print("Warning: google-genai not installed, Gemini TTS will not be available")
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # 用於 session 加密
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))  # 用於 session 加密
 app.config['JSON_AS_ASCII'] = False  # 確保 JSON 回應正確處理中文
 app.config['TEMPLATES_AUTO_RELOAD'] = True  # 自動重載模板
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # 禁用靜態文件緩存
-
-# MongoDB 連接
-client = MongoClient('mongodb://localhost:27017/')
-db = client['local']  # 資料庫名稱
-collection = db['帳號密碼']  # 集合名稱
 
 # 全局變量存儲子進程
 web_app_process = None
@@ -188,10 +194,10 @@ def dashboard():
         return redirect(url_for('login'))
 
     # 獲取用戶的語言設定
-    user = collection.find_one({'username': session['username']})
+    user = get_user_by_username(session['username'])
     lang = 'zh-TW'
-    if user and 'settings' in user:
-        lang = user['settings'].get('language', 'zh-TW')
+    if user and user.get('language'):
+        lang = user.get('language', 'zh-TW')
 
     # 獲取翻譯
     translations = get_translation(lang)
@@ -212,17 +218,14 @@ def api_login():
         return jsonify({'success': False, 'message': '請輸入帳號和密碼'}), 400
 
     # 查詢資料庫
-    user = collection.find_one({'username': username})
+    user = get_user_by_username(username)
 
     if user and user['password'] == hash_password(password):
         session['username'] = username
-        session['user_id'] = str(user['_id'])
+        session['user_id'] = str(user.get('id', username))
 
         # 更新最後登入時間
-        collection.update_one(
-            {'username': username},
-            {'$set': {'last_login': datetime.now()}}
-        )
+        update_last_login(username)
 
         # 記錄登入活動
         log_activity(username, 'login', '用戶登入系統')
@@ -241,7 +244,7 @@ def api_register():
     data = request.json
     username = data.get('username', '').strip()
     password = data.get('password', '')
-    email = data.get('email', '').strip()
+    email = data.get('email', '').strip() or None
 
     if not username or not password:
         return jsonify({'success': False, 'message': '帳號和密碼不能為空'}), 400
@@ -249,24 +252,16 @@ def api_register():
     if len(password) < 6:
         return jsonify({'success': False, 'message': '密碼長度至少需要 6 個字元'}), 400
 
-    # 檢查帳號是否已存在
-    if collection.find_one({'username': username}):
-        return jsonify({'success': False, 'message': '帳號已存在'}), 409
+    # 建立新用戶 (create_user 會自動檢查是否已存在)
+    result = create_user(username, hash_password(password), email)
 
-    # 檢查 email 是否已存在
-    if email and collection.find_one({'email': email}):
-        return jsonify({'success': False, 'message': 'Email 已被使用'}), 409
-
-    # 建立新用戶
-    new_user = {
-        'username': username,
-        'password': hash_password(password),
-        'email': email,
-        'created_at': datetime.now(),
-        'last_login': None
-    }
-
-    collection.insert_one(new_user)
+    if not result['success']:
+        if result['error'] == 'username_exists':
+            return jsonify({'success': False, 'message': '帳號已存在'}), 409
+        elif result['error'] == 'email_exists':
+            return jsonify({'success': False, 'message': 'Email 已被使用'}), 409
+        else:
+            return jsonify({'success': False, 'message': '註冊失敗，請稍後再試'}), 500
 
     return jsonify({
         'success': True,
@@ -297,20 +292,20 @@ def get_user_profile():
     if 'username' not in session:
         return jsonify({'success': False, 'message': '未登入'}), 401
 
-    user = collection.find_one({'username': session['username']})
+    user = get_user_by_username(session['username'])
     if user:
         return jsonify({
             'success': True,
             'user': {
                 'username': user['username'],
                 'email': user.get('email', ''),
-                'created_at': user.get('created_at').isoformat() if user.get('created_at') else None,
-                'last_login': user.get('last_login').isoformat() if user.get('last_login') else None,
-                'settings': user.get('settings', {
+                'created_at': user.get('created_at'),
+                'last_login': user.get('last_login'),
+                'settings': {
                     'notifications': True,
                     'theme': 'default',
-                    'language': 'zh-TW'
-                })
+                    'language': user.get('language', 'zh-TW')
+                }
             }
         })
     return jsonify({'success': False, 'message': '用戶不存在'}), 404
@@ -322,19 +317,15 @@ def update_user_profile():
         return jsonify({'success': False, 'message': '未登入'}), 401
 
     data = request.json
-    email = data.get('email', '').strip()
+    email = data.get('email', '').strip() or None
 
     # 檢查 email 是否被其他用戶使用
     if email:
-        existing = collection.find_one({'email': email, 'username': {'$ne': session['username']}})
-        if existing:
+        if check_email_exists(email, exclude_username=session['username']):
             return jsonify({'success': False, 'message': 'Email 已被使用'}), 409
 
     # 更新用戶資料
-    collection.update_one(
-        {'username': session['username']},
-        {'$set': {'email': email}}
-    )
+    update_user(session['username'], {'email': email})
 
     return jsonify({'success': True, 'message': '資料更新成功'})
 
@@ -355,15 +346,12 @@ def change_password():
         return jsonify({'success': False, 'message': '新密碼長度至少需要 6 個字元'}), 400
 
     # 驗證舊密碼
-    user = collection.find_one({'username': session['username']})
+    user = get_user_by_username(session['username'])
     if not user or user['password'] != hash_password(old_password):
         return jsonify({'success': False, 'message': '舊密碼錯誤'}), 401
 
     # 更新密碼
-    collection.update_one(
-        {'username': session['username']},
-        {'$set': {'password': hash_password(new_password)}}
-    )
+    update_user_password(session['username'], hash_password(new_password))
 
     return jsonify({'success': True, 'message': '密碼修改成功'})
 
@@ -373,14 +361,14 @@ def get_user_settings():
     if 'username' not in session:
         return jsonify({'success': False, 'message': '未登入'}), 401
 
-    user = collection.find_one({'username': session['username']})
+    user = get_user_by_username(session['username'])
     if user:
-        settings = user.get('settings', {
+        settings = {
             'notifications': True,
             'theme': 'default',
-            'language': 'zh-TW',
+            'language': user.get('language', 'zh-TW'),
             'email_notifications': False
-        })
+        }
         return jsonify({'success': True, 'settings': settings})
     return jsonify({'success': False, 'message': '用戶不存在'}), 404
 
@@ -391,17 +379,10 @@ def update_user_settings():
         return jsonify({'success': False, 'message': '未登入'}), 401
 
     data = request.json
-    settings = {
-        'notifications': data.get('notifications', True),
-        'theme': data.get('theme', 'default'),
-        'language': data.get('language', 'zh-TW'),
-        'email_notifications': data.get('email_notifications', False)
-    }
+    language = data.get('language', 'zh-TW')
 
-    collection.update_one(
-        {'username': session['username']},
-        {'$set': {'settings': settings}}
-    )
+    # 只更新語言設定到資料庫
+    update_user_language(session['username'], language)
 
     # 記錄設定更新活動
     log_activity(session['username'], 'settings_update', '更新系統設定')
@@ -418,47 +399,22 @@ def get_translations(lang_code):
     translations = get_translation(lang_code)
     return jsonify({'success': True, 'translations': translations, 'lang': lang_code})
 
-# 記錄用戶活動
+# 記錄用戶活動 (簡化版 - 僅記錄到 console)
 def log_activity(username, activity_type, description):
-    """記錄用戶活動到 MongoDB"""
+    """記錄用戶活動到 console"""
     try:
-        activity_log = db['activity_logs']
-        activity_log.insert_one({
-            'username': username,
-            'type': activity_type,
-            'description': description,
-            'timestamp': datetime.now(),
-            'ip_address': request.remote_addr
-        })
+        print(f"[Activity] {datetime.now().isoformat()} - {username}: {activity_type} - {description}")
     except Exception as e:
         print(f"記錄活動失敗: {e}")
 
-# 獲取活動記錄
+# 獲取活動記錄 (簡化版 - 活動記錄已移除)
 @app.route('/api/user/activities', methods=['GET'])
 def get_user_activities():
     if 'username' not in session:
         return jsonify({'success': False, 'message': '未登入'}), 401
 
-    try:
-        activity_log = db['activity_logs']
-        # 獲取最近 50 條記錄
-        activities = list(activity_log.find(
-            {'username': session['username']}
-        ).sort('timestamp', -1).limit(50))
-
-        # 轉換為 JSON 可序列化格式
-        activities_list = []
-        for activity in activities:
-            activities_list.append({
-                'type': activity.get('type', ''),
-                'description': activity.get('description', ''),
-                'timestamp': activity.get('timestamp').isoformat() if activity.get('timestamp') else None,
-                'ip_address': activity.get('ip_address', '')
-            })
-
-        return jsonify({'success': True, 'activities': activities_list})
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'獲取活動記錄失敗: {str(e)}'}), 500
+    # 活動記錄功能已簡化，返回空列表
+    return jsonify({'success': True, 'activities': []})
 
 # 上傳用戶頭像
 @app.route('/api/user/avatar', methods=['POST'])
@@ -479,11 +435,11 @@ def upload_avatar():
 
     # 更新用戶頭像
     try:
-        collection.update_one(
-            {'username': session['username']},
-            {'$set': {'avatar': avatar_data}}
-        )
-        return jsonify({'success': True, 'message': '頭像更新成功'})
+        result = update_user(session['username'], {'avatar': avatar_data})
+        if result.get('success'):
+            return jsonify({'success': True, 'message': '頭像更新成功'})
+        else:
+            return jsonify({'success': False, 'message': '更新失敗'}), 500
     except Exception as e:
         return jsonify({'success': False, 'message': f'更新失敗: {str(e)}'}), 500
 
@@ -493,7 +449,7 @@ def get_avatar():
     if 'username' not in session:
         return jsonify({'success': False, 'message': '未登入'}), 401
 
-    user = collection.find_one({'username': session['username']})
+    user = get_user_by_username(session['username'])
     if user and 'avatar' in user:
         return jsonify({'success': True, 'avatar': user['avatar']})
     return jsonify({'success': True, 'avatar': None})
@@ -505,33 +461,32 @@ def get_user_stats():
         return jsonify({'success': False, 'message': '未登入'}), 401
 
     try:
-        user = collection.find_one({'username': session['username']})
-        activity_log = db['activity_logs']
-
-        # 計算登入次數
-        login_count = activity_log.count_documents({
-            'username': session['username'],
-            'type': 'login'
-        })
-
-        # 計算總活動次數
-        total_activities = activity_log.count_documents({
-            'username': session['username']
-        })
+        user = get_user_by_username(session['username'])
 
         # 計算使用天數
+        days_active = 0
+        member_since = None
         if user and user.get('created_at'):
-            days_active = (datetime.now() - user['created_at']).days + 1
-        else:
-            days_active = 0
+            created_at_str = user.get('created_at')
+            try:
+                # 處理 ISO 格式的日期字串
+                if isinstance(created_at_str, str):
+                    created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+                else:
+                    created_at = created_at_str
+                days_active = (datetime.now() - created_at.replace(tzinfo=None)).days + 1
+                member_since = created_at_str
+            except:
+                days_active = 1
+                member_since = created_at_str
 
         return jsonify({
             'success': True,
             'stats': {
-                'login_count': login_count,
-                'total_activities': total_activities,
+                'login_count': 0,  # 活動記錄已簡化
+                'total_activities': 0,  # 活動記錄已簡化
                 'days_active': days_active,
-                'member_since': user.get('created_at').isoformat() if user.get('created_at') else None
+                'member_since': member_since
             }
         })
     except Exception as e:
@@ -849,15 +804,14 @@ def tts_page():
     return Response(html_content, mimetype='text/html; charset=utf-8')
 
 if __name__ == '__main__':
-    # 確保 MongoDB 連接成功
+    # 確保 Supabase 連接成功
     try:
-        client.server_info()
-        print("✓ MongoDB 連接成功")
-        print(f"✓ 使用資料庫: {db.name}")
-        print(f"✓ 使用集合: {collection.name}")
+        from supabase_utils import get_supabase_client
+        supabase = get_supabase_client()
+        print("✓ Supabase 連接成功")
     except Exception as e:
-        print(f"✗ MongoDB 連接失敗: {e}")
-        print("請確保 MongoDB 服務正在運行")
+        print(f"✗ Supabase 連接失敗: {e}")
+        print("請確保 .env 中已設置 SUPABASE_URL 和 SUPABASE_ANON_KEY")
         sys.exit(1)
 
     print("\n" + "=" * 50)

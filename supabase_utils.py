@@ -167,3 +167,119 @@ def delete_chinese_word(user_id: str, chinese: str) -> Dict:
     except Exception as e:
         print(f"Error deleting Chinese word: {e}")
         return {'error': str(e)}, 500
+
+# ==================== 用戶帳號操作 ====================
+
+def get_user_by_username(username: str) -> Optional[Dict]:
+    """根據用戶名獲取用戶資料"""
+    try:
+        supabase = get_supabase_client()
+        response = supabase.table('users')\
+            .select('*')\
+            .eq('username', username)\
+            .execute()
+
+        if response.data and len(response.data) > 0:
+            return response.data[0]
+        return None
+    except Exception as e:
+        print(f"Error fetching user by username: {e}")
+        return None
+
+def get_user_by_email(email: str) -> Optional[Dict]:
+    """根據 email 獲取用戶資料"""
+    try:
+        supabase = get_supabase_client()
+        response = supabase.table('users')\
+            .select('*')\
+            .eq('email', email)\
+            .execute()
+
+        if response.data and len(response.data) > 0:
+            return response.data[0]
+        return None
+    except Exception as e:
+        print(f"Error fetching user by email: {e}")
+        return None
+
+def create_user(username: str, password_hash: str, email: str = None, language: str = 'zh-TW') -> Dict:
+    """創建新用戶"""
+    try:
+        supabase = get_supabase_client()
+
+        # 檢查用戶名是否已存在
+        existing = get_user_by_username(username)
+        if existing:
+            return {'success': False, 'error': 'username_exists'}
+
+        # 檢查 email 是否已存在
+        if email:
+            existing_email = get_user_by_email(email)
+            if existing_email:
+                return {'success': False, 'error': 'email_exists'}
+
+        # 準備數據
+        data = {
+            'username': username,
+            'password': password_hash,
+            'email': email,
+            'language': language,
+            'created_at': datetime.now().isoformat()
+        }
+
+        # 插入數據
+        response = supabase.table('users').insert(data).execute()
+
+        if response.data:
+            return {'success': True, 'user': response.data[0]}
+        return {'success': False, 'error': 'insert_failed'}
+
+    except Exception as e:
+        print(f"Error creating user: {e}")
+        return {'success': False, 'error': str(e)}
+
+def update_user(username: str, updates: Dict) -> Dict:
+    """更新用戶資料"""
+    try:
+        supabase = get_supabase_client()
+
+        response = supabase.table('users')\
+            .update(updates)\
+            .eq('username', username)\
+            .execute()
+
+        if response.data:
+            return {'success': True, 'user': response.data[0]}
+        return {'success': False, 'error': 'update_failed'}
+
+    except Exception as e:
+        print(f"Error updating user: {e}")
+        return {'success': False, 'error': str(e)}
+
+def update_user_password(username: str, new_password_hash: str) -> Dict:
+    """更新用戶密碼"""
+    return update_user(username, {'password': new_password_hash})
+
+def update_user_language(username: str, language: str) -> Dict:
+    """更新用戶語言設定"""
+    return update_user(username, {'language': language})
+
+def update_last_login(username: str) -> Dict:
+    """更新最後登入時間"""
+    return update_user(username, {'last_login': datetime.now().isoformat()})
+
+def check_email_exists(email: str, exclude_username: str = None) -> bool:
+    """檢查 email 是否已被使用（可排除特定用戶）"""
+    try:
+        supabase = get_supabase_client()
+        query = supabase.table('users').select('username').eq('email', email)
+
+        if exclude_username:
+            query = query.neq('username', exclude_username)
+
+        response = query.execute()
+        return len(response.data) > 0 if response.data else False
+
+    except Exception as e:
+        print(f"Error checking email: {e}")
+        return False
