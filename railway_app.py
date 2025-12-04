@@ -270,8 +270,21 @@ def check_auth():
 
 @app.route('/korean')
 def korean_page():
+    # 支援從 Vercel 傳遞用戶名（URL 參數）
+    username = request.args.get('user')
+
+    if username:
+        # 驗證用戶是否存在
+        user = get_user_by_username(username)
+        if user:
+            # 自動設置 session
+            session['username'] = username
+            session['user_id'] = str(user.get('id', username))
+
+    # 檢查 session
     if 'username' not in session:
         return redirect(url_for('login'))
+
     return render_template('index.html', username=session['username'])
 
 @app.route('/korean/chat', methods=['POST'])
@@ -327,6 +340,14 @@ def delete_korean_word_route():
 
 @app.route('/korean/review')
 def korean_review():
+    # 支援從 Vercel 傳遞用戶名
+    username = request.args.get('user')
+    if username:
+        user = get_user_by_username(username)
+        if user:
+            session['username'] = username
+            session['user_id'] = str(user.get('id', username))
+
     if 'username' not in session:
         return redirect(url_for('login'))
     return render_template('review.html', username=session['username'])
@@ -335,8 +356,21 @@ def korean_review():
 
 @app.route('/chinese')
 def chinese_page():
+    # 支援從 Vercel 傳遞用戶名（URL 參數）
+    username = request.args.get('user')
+
+    if username:
+        # 驗證用戶是否存在
+        user = get_user_by_username(username)
+        if user:
+            # 自動設置 session
+            session['username'] = username
+            session['user_id'] = str(user.get('id', username))
+
+    # 檢查 session
     if 'username' not in session:
         return redirect(url_for('login'))
+
     return render_template('index22.html', username=session['username'])
 
 @app.route('/chinese/chat', methods=['POST'])
@@ -392,6 +426,14 @@ def delete_chinese_word_route():
 
 @app.route('/chinese/review')
 def chinese_review():
+    # 支援從 Vercel 傳遞用戶名
+    username = request.args.get('user')
+    if username:
+        user = get_user_by_username(username)
+        if user:
+            session['username'] = username
+            session['user_id'] = str(user.get('id', username))
+
     if 'username' not in session:
         return redirect(url_for('login'))
     return render_template('review22.html', username=session['username'])

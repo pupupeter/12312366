@@ -511,14 +511,14 @@
         </div>
 
         <div class="cards-grid">
-            <div class="card" onclick="window.open('/korean-app', '_blank')">
-                <div class="card-icon">👘</div>
+            <div class="card" onclick="openRailwayApp('korean')">
+                <div class="card-icon">📰</div>
                 <h3 data-i18n="korean_news_title">{{ t.korean_news_title }}</h3>
                 <p data-i18n="korean_news_desc">{{ t.korean_news_desc }}</p>
             </div>
 
-            <div class="card" onclick="window.open('/chinese-app', '_blank')">
-                <div class="card-icon">🀄</div>
+            <div class="card" onclick="openRailwayApp('chinese')">
+                <div class="card-icon">📚</div>
                 <h3 data-i18n="chinese_vocab_title">{{ t.chinese_vocab_title }}</h3>
                 <p data-i18n="chinese_vocab_desc">{{ t.chinese_vocab_desc }}</p>
             </div>
@@ -1272,6 +1272,21 @@
             } catch (error) {
                 console.error('檢查登入狀態錯誤:', error);
             }
+        }
+
+        // 打開 Railway 應用（傳遞用戶名）
+        function openRailwayApp(appType) {
+            // Railway 應用網址（部署後請替換為實際網址）
+            const RAILWAY_URL = 'https://你的railway網址.up.railway.app';
+
+            // 根據環境決定使用哪個網址
+            const railwayUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:5000'  // 本地開發
+                : RAILWAY_URL;  // 生產環境
+
+            // 構建完整 URL 並傳遞用戶名
+            const url = `${railwayUrl}/${appType}?user=${encodeURIComponent(username)}`;
+            window.open(url, '_blank');
         }
 
         // 初始化
