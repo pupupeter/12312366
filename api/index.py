@@ -40,7 +40,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-producti
 app.config['JSON_AS_ASCII'] = False
 
 # Railway 應用網址（用於 Dashboard 連結）
-RAILWAY_URL = os.environ.get('RAILWAY_URL', 'https://你的railway網址.up.railway.app')
+RAILWAY_URL = os.environ.get('RAILWAY_URL', 'https://web-production-c3393.up.railway.app')
 
 # TTS 配置
 LANGUAGE_OPTIONS = {
