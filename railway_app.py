@@ -47,6 +47,12 @@ app.config['JSON_AS_ASCII'] = False
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
+# Session 配置（支援跨域單點登入）
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True  # HTTPS only
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 小時
+
 # ==================== AI Agent 初始化 ====================
 
 # 韓文新聞工具
@@ -280,6 +286,9 @@ def korean_page():
             # 自動設置 session
             session['username'] = username
             session['user_id'] = str(user.get('id', username))
+            session.permanent = True
+            # 設置完 session 後重定向到乾淨的 URL（移除 user 參數）
+            return redirect(url_for('korean_page'))
 
     # 檢查 session
     if 'username' not in session:
@@ -347,6 +356,8 @@ def korean_review():
         if user:
             session['username'] = username
             session['user_id'] = str(user.get('id', username))
+            session.permanent = True
+            return redirect(url_for('korean_review'))
 
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -366,6 +377,9 @@ def chinese_page():
             # 自動設置 session
             session['username'] = username
             session['user_id'] = str(user.get('id', username))
+            session.permanent = True
+            # 設置完 session 後重定向到乾淨的 URL（移除 user 參數）
+            return redirect(url_for('chinese_page'))
 
     # 檢查 session
     if 'username' not in session:
@@ -433,6 +447,8 @@ def chinese_review():
         if user:
             session['username'] = username
             session['user_id'] = str(user.get('id', username))
+            session.permanent = True
+            return redirect(url_for('chinese_review'))
 
     if 'username' not in session:
         return redirect(url_for('login'))

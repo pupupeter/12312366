@@ -529,7 +529,7 @@
                 <p data-i18n="ai_tts_desc">{{ t.ai_tts_desc }}</p>
             </div>
 
-            <div class="card" onclick="window.location.href='/games'">
+            <div class="card" onclick="openGamesModal()">
                 <div class="card-icon">🎮</div>
                 <h3 data-i18n="word_games_title">{{ t.word_games_title }}</h3>
                 <p data-i18n="word_games_desc">{{ t.word_games_desc }}</p>
@@ -705,6 +705,31 @@
             <div class="modal-body">
                 <div id="activitiesList">
                     <div class="loading">載入中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 遊戲選擇模態視窗 -->
+    <div id="gamesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎮 單字複習遊戲</h2>
+                <span class="close" onclick="closeModal('gamesModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; opacity: 0.9;">選擇你想複習的語言：</p>
+
+                <div class="card" onclick="openRailwayApp('korean/review')" style="cursor: pointer; margin-bottom: 15px;">
+                    <div class="card-icon">🇰🇷</div>
+                    <h3>韓文單字遊戲</h3>
+                    <p>複習你收藏的韓文單字</p>
+                </div>
+
+                <div class="card" onclick="openRailwayApp('chinese/review')" style="cursor: pointer;">
+                    <div class="card-icon">🇨🇳</div>
+                    <h3>中文單字遊戲</h3>
+                    <p>複習你收藏的中文詞彙</p>
                 </div>
             </div>
         </div>
@@ -1272,6 +1297,11 @@
             } catch (error) {
                 console.error('檢查登入狀態錯誤:', error);
             }
+        }
+
+        // 打開遊戲選擇模態視窗
+        function openGamesModal() {
+            openModal('gamesModal');
         }
 
         // 打開 Railway 應用（傳遞用戶名）
