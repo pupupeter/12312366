@@ -372,5 +372,8 @@ def tts_generate_manual():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Vercel handler
+# Vercel handler - WSGI 應用入口
 app.debug = False
+
+# 這是 Vercel 需要的應用對象
+application = app
