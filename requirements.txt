@@ -6,4 +6,5 @@ markdownify>=0.11.6
 google-genai>=0.2.0
 supabase>=2.0.0
 smolagents>=0.1.0
+litellm>=1.0.0
 lxml>=4.9.0
