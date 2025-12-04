@@ -217,6 +217,37 @@ def check_auth():
         return jsonify({'authenticated': True, 'username': session['username']})
     return jsonify({'authenticated': False})
 
+@app.route('/api/debug/env')
+def debug_env():
+    """調試端點 - 檢查環境變數（不顯示完整值）"""
+    import os
+
+    # 檢查所有可能的環境變數名稱
+    env_vars = {}
+    possible_keys = [
+        'SUPABASE_URL',
+        'SUPABASE_ANON_KEY',
+        'SUPABASE_KEY',
+        'SECRET_KEY'
+    ]
+
+    for key in possible_keys:
+        value = os.environ.get(key)
+        if value:
+            # 只顯示前10個字符，避免洩露
+            env_vars[key] = f"{value[:10]}... (長度: {len(value)})"
+        else:
+            env_vars[key] = "未設置"
+
+    # 列出所有包含 SUPABASE 的環境變數
+    all_supabase_vars = {k: f"{v[:10]}..." for k, v in os.environ.items() if 'SUPABASE' in k.upper()}
+
+    return jsonify({
+        'checked_vars': env_vars,
+        'all_supabase_vars': all_supabase_vars,
+        'total_env_vars': len(os.environ)
+    })
+
 # ==================== TTS 路由 ====================
 
 @app.route('/tts')
