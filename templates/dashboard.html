@@ -1309,6 +1309,9 @@
             // 從後端獲取 Railway URL
             const RAILWAY_URL = "{{ railway_url }}";
 
+            // 調試：顯示當前 Railway URL
+            console.log('[DEBUG] Railway URL from backend:', RAILWAY_URL);
+
             // 根據環境決定使用哪個網址
             const railwayUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                 ? 'http://localhost:5000'  // 本地開發

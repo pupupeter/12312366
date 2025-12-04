@@ -232,14 +232,18 @@ def debug_env():
         'SUPABASE_URL',
         'SUPABASE_ANON_KEY',
         'SUPABASE_KEY',
-        'SECRET_KEY'
+        'SECRET_KEY',
+        'RAILWAY_URL'
     ]
 
     for key in possible_keys:
         value = os.environ.get(key)
         if value:
-            # 只顯示前10個字符，避免洩露
-            env_vars[key] = f"{value[:10]}... (長度: {len(value)})"
+            # RAILWAY_URL 顯示完整，其他只顯示前10個字符
+            if key == 'RAILWAY_URL':
+                env_vars[key] = value
+            else:
+                env_vars[key] = f"{value[:10]}... (長度: {len(value)})"
         else:
             env_vars[key] = "未設置"
 
@@ -249,7 +253,8 @@ def debug_env():
     return jsonify({
         'checked_vars': env_vars,
         'all_supabase_vars': all_supabase_vars,
-        'total_env_vars': len(os.environ)
+        'total_env_vars': len(os.environ),
+        'current_railway_url': RAILWAY_URL
     })
 
 # ==================== TTS 路由 ====================
