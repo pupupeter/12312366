@@ -405,7 +405,7 @@
 
         function checkStatus(processId) {
             const basePath = getBasePath();
-            fetch(`${basePath}/status/${processId}`)
+            fetch(`${basePath}/korean/status/${processId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'processing') {
@@ -415,7 +415,7 @@
 
                         // 顯示結果按鈕
                         const basePath = getBasePath();
-                        document.getElementById('viewGraphBtn').href = `${basePath}/result/${data.filename}`;
+                        document.getElementById('viewGraphBtn').href = `${basePath}/korean/result/${data.filename}`;
                         document.getElementById('resultContainer').style.display = 'block';
 
                         // 停止狀態檢查
@@ -485,7 +485,7 @@
 
             // 發送處理請求
             const basePath = getBasePath();
-            fetch(`${basePath}/process`, {
+            fetch(`${basePath}/korean/process`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
