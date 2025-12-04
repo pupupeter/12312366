@@ -16,6 +16,7 @@ import json
 from translations import get_translation
 from korean_analysis import generate_graph_html
 from chinese_analysis import generate_chinese_graph_html
+from tocfl_loader import get_tocfl_vocab
 
 # 載入環境變數
 try:
@@ -926,6 +927,19 @@ def process_chinese_text_analysis(text, process_id):
 
             processing_status[process_id] = {
                 'status': 'processing',
+                'message': '正在添加 TOCFL 級數...',
+                'progress': 85
+            }
+
+            # 添加 TOCFL 級數
+            tocfl = get_tocfl_vocab()
+            for word in words:
+                chinese = word.get('chinese', '')
+                tocfl_level = tocfl.get_level_display(chinese)
+                word['tocfl_level'] = tocfl_level if tocfl_level else '未分級'
+
+            processing_status[process_id] = {
+                'status': 'processing',
                 'message': '正在生成知識圖譜...',
                 'progress': 90
             }
@@ -1002,6 +1016,19 @@ def process_chinese_url_analysis(url, process_id):
         if start_idx != -1 and end_idx != -1:
             json_part = cleaned_json[start_idx:end_idx+1]
             words = json.loads(json_part)
+
+            processing_status[process_id] = {
+                'status': 'processing',
+                'message': '正在添加 TOCFL 級數...',
+                'progress': 85
+            }
+
+            # 添加 TOCFL 級數
+            tocfl = get_tocfl_vocab()
+            for word in words:
+                chinese = word.get('chinese', '')
+                tocfl_level = tocfl.get_level_display(chinese)
+                word['tocfl_level'] = tocfl_level if tocfl_level else '未分級'
 
             processing_status[process_id] = {
                 'status': 'processing',

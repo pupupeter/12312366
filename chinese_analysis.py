@@ -20,6 +20,7 @@ def generate_chinese_graph_html(words_data, url):
             'pinyin': word.get('pinyin', 'N/A'),
             'definition': word.get('definition', 'N/A'),
             'example': word.get('example', 'N/A'),
+            'tocfl_level': word.get('tocfl_level', '未分級'),
             'group': i % 5  # 用於顏色分組
         })
 
@@ -350,7 +351,7 @@ def generate_chinese_graph_html(words_data, url):
                 .duration(200)
                 .style("opacity", .9);
             tooltip.html(`
-                <div class="chinese">${{d.chinese}}</div>
+                <div class="chinese">${{d.chinese}} <span style="background: #ff6b6b; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-left: 5px;">${{d.tocfl_level}}</span></div>
                 <div class="pinyin">${{d.pinyin}}</div>
                 <div class="definition"><strong>定義:</strong> ${{d.definition}}</div>
                 <div class="example"><strong>例句:</strong> ${{d.example}}</div>
