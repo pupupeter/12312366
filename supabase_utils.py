@@ -7,14 +7,18 @@ import os
 from typing import List, Dict, Optional
 from datetime import datetime
 from supabase import create_client, Client
-from dotenv import load_dotenv
 
-# 加載環境變量
-load_dotenv()
+# 只在本地開發時加載 .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Vercel 環境中可能沒有 python-dotenv，直接跳過
+    pass
 
-# Supabase 配置
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_KEY = os.getenv('SUPABASE_ANON_KEY')
+# Supabase 配置 - 直接從環境變數讀取
+SUPABASE_URL = os.environ.get('SUPABASE_URL') or os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.environ.get('SUPABASE_ANON_KEY') or os.getenv('SUPABASE_ANON_KEY')
 
 # 全局客戶端
 _supabase_client: Optional[Client] = None
@@ -23,9 +27,18 @@ def get_supabase_client() -> Client:
     """獲取或創建 Supabase 客戶端"""
     global _supabase_client
     if _supabase_client is None:
-        if not SUPABASE_URL or not SUPABASE_KEY:
-            raise ValueError("請在 .env 文件中設置 SUPABASE_URL 和 SUPABASE_ANON_KEY")
-        _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        # 再次檢查環境變數（確保在每次調用時都能獲取最新值）
+        url = os.environ.get('SUPABASE_URL') or os.getenv('SUPABASE_URL')
+        key = os.environ.get('SUPABASE_ANON_KEY') or os.getenv('SUPABASE_ANON_KEY')
+
+        if not url or not key:
+            # 提供更詳細的錯誤信息
+            error_msg = f"Supabase 配置缺失: URL={'有' if url else '無'}, KEY={'有' if key else '無'}"
+            print(f"[ERROR] {error_msg}")
+            raise ValueError(error_msg)
+
+        print(f"[INFO] Connecting to Supabase: {url[:30]}...")
+        _supabase_client = create_client(url, key)
     return _supabase_client
 
 # ==================== 韓文單字操作 ====================
