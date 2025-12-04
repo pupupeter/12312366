@@ -277,24 +277,39 @@ def check_auth():
 @app.route('/korean')
 def korean_page():
     # 支援從 Vercel 傳遞用戶名（URL 參數）
-    username = request.args.get('user')
+    username_param = request.args.get('user')
 
-    if username:
+    print(f"[DEBUG] /korean - username_param: {username_param}")
+    print(f"[DEBUG] /korean - current session: {dict(session)}")
+
+    # 優先使用 URL 參數，如果沒有則檢查 session
+    username = None
+
+    if username_param:
         # 驗證用戶是否存在
-        user = get_user_by_username(username)
-        if user:
-            # 自動設置 session
-            session['username'] = username
-            session['user_id'] = str(user.get('id', username))
-            session.permanent = True
-            # 設置完 session 後重定向到乾淨的 URL（移除 user 參數）
-            return redirect(url_for('korean_page'))
+        user = get_user_by_username(username_param)
+        print(f"[DEBUG] /korean - user found: {user is not None}")
 
-    # 檢查 session
-    if 'username' not in session:
+        if user:
+            username = username_param
+            # 同時設置 session（嘗試）
+            session.clear()
+            session['username'] = username_param
+            session['user_id'] = str(user.get('id', username_param))
+            session.permanent = True
+            print(f"[DEBUG] /korean - session set: {dict(session)}")
+    elif 'username' in session:
+        # 從 session 獲取用戶名
+        username = session['username']
+        print(f"[DEBUG] /korean - username from session: {username}")
+
+    # 如果都沒有，重定向到登入
+    if not username:
+        print(f"[DEBUG] /korean - no username found, redirecting to login")
         return redirect(url_for('login'))
 
-    return render_template('index.html', username=session['username'])
+    # 直接顯示頁面，不重定向
+    return render_template('index.html', username=username)
 
 @app.route('/korean/chat', methods=['POST'])
 def korean_chat():
@@ -350,42 +365,52 @@ def delete_korean_word_route():
 @app.route('/korean/review')
 def korean_review():
     # 支援從 Vercel 傳遞用戶名
-    username = request.args.get('user')
-    if username:
-        user = get_user_by_username(username)
-        if user:
-            session['username'] = username
-            session['user_id'] = str(user.get('id', username))
-            session.permanent = True
-            return redirect(url_for('korean_review'))
+    username_param = request.args.get('user')
+    username = None
 
-    if 'username' not in session:
+    if username_param:
+        user = get_user_by_username(username_param)
+        if user:
+            username = username_param
+            session.clear()
+            session['username'] = username_param
+            session['user_id'] = str(user.get('id', username_param))
+            session.permanent = True
+    elif 'username' in session:
+        username = session['username']
+
+    if not username:
         return redirect(url_for('login'))
-    return render_template('review.html', username=session['username'])
+    return render_template('review.html', username=username)
 
 # ==================== 中文詞彙系統 ====================
 
 @app.route('/chinese')
 def chinese_page():
     # 支援從 Vercel 傳遞用戶名（URL 參數）
-    username = request.args.get('user')
+    username_param = request.args.get('user')
 
-    if username:
+    # 優先使用 URL 參數，如果沒有則檢查 session
+    username = None
+
+    if username_param:
         # 驗證用戶是否存在
-        user = get_user_by_username(username)
+        user = get_user_by_username(username_param)
         if user:
-            # 自動設置 session
-            session['username'] = username
-            session['user_id'] = str(user.get('id', username))
+            username = username_param
+            # 同時設置 session
+            session.clear()
+            session['username'] = username_param
+            session['user_id'] = str(user.get('id', username_param))
             session.permanent = True
-            # 設置完 session 後重定向到乾淨的 URL（移除 user 參數）
-            return redirect(url_for('chinese_page'))
+    elif 'username' in session:
+        username = session['username']
 
-    # 檢查 session
-    if 'username' not in session:
+    # 如果都沒有，重定向到登入
+    if not username:
         return redirect(url_for('login'))
 
-    return render_template('index22.html', username=session['username'])
+    return render_template('index22.html', username=username)
 
 @app.route('/chinese/chat', methods=['POST'])
 def chinese_chat():
@@ -441,18 +466,23 @@ def delete_chinese_word_route():
 @app.route('/chinese/review')
 def chinese_review():
     # 支援從 Vercel 傳遞用戶名
-    username = request.args.get('user')
-    if username:
-        user = get_user_by_username(username)
-        if user:
-            session['username'] = username
-            session['user_id'] = str(user.get('id', username))
-            session.permanent = True
-            return redirect(url_for('chinese_review'))
+    username_param = request.args.get('user')
+    username = None
 
-    if 'username' not in session:
+    if username_param:
+        user = get_user_by_username(username_param)
+        if user:
+            username = username_param
+            session.clear()
+            session['username'] = username_param
+            session['user_id'] = str(user.get('id', username_param))
+            session.permanent = True
+    elif 'username' in session:
+        username = session['username']
+
+    if not username:
         return redirect(url_for('login'))
-    return render_template('review22.html', username=session['username'])
+    return render_template('review22.html', username=username)
 
 # ==================== 健康檢查 ====================
 
