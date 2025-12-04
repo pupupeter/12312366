@@ -350,6 +350,7 @@ def korean_chat():
         return jsonify({'error': f'處理失敗：{str(e)}'}), 500
 
 @app.route('/korean/saved-words', methods=['GET'])
+@app.route('/korean/api/saved-words', methods=['GET'])
 def get_korean_saved_words():
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -370,12 +371,16 @@ def save_korean_word():
     return jsonify(result)
 
 @app.route('/korean/delete-word', methods=['POST'])
-def delete_korean_word_route():
+@app.route('/korean/api/saved-words/<korean>', methods=['DELETE'])
+def delete_korean_word_route(korean=None):
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
     user_id = session.get('user_id', session['username'])
-    korean = request.json.get('korean')
+
+    # 支援兩種方式：POST 的 JSON body 或 DELETE 的 URL 參數
+    if korean is None:
+        korean = request.json.get('korean')
 
     result = delete_korean_word(user_id, korean)
     return jsonify(result)
@@ -474,6 +479,7 @@ def chinese_chat():
         return jsonify({'error': f'處理失敗：{str(e)}'}), 500
 
 @app.route('/chinese/saved-words', methods=['GET'])
+@app.route('/chinese/api/saved-words', methods=['GET'])
 def get_chinese_saved_words():
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -494,12 +500,14 @@ def save_chinese_word():
     return jsonify(result)
 
 @app.route('/chinese/delete-word', methods=['POST'])
-def delete_chinese_word_route():
+@app.route('/chinese/api/saved-words/<chinese>', methods=['DELETE'])
+def delete_chinese_word_route(chinese=None):
     if 'username' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
     user_id = session.get('user_id', session['username'])
-    chinese = request.json.get('chinese')
+    if chinese is None:
+        chinese = request.json.get('chinese')
 
     result = delete_chinese_word(user_id, chinese)
     return jsonify(result)
@@ -535,6 +543,77 @@ def chinese_review():
     if not username:
         return redirect(url_for('login'))
     return render_template('review22.html', username=username)
+
+# ==================== 遊戲系統 ====================
+
+@app.route('/games')
+def games_menu():
+    # 支援從 Vercel 傳遞用戶名
+    username_param = request.args.get('user')
+    username = None
+
+    if username_param:
+        try:
+            user = get_user_by_username(username_param)
+            if user:
+                username = username_param
+                session.clear()
+                session['username'] = username_param
+                session['user_id'] = str(user.get('id', username_param))
+                session.permanent = True
+            else:
+                username = username_param
+                session['username'] = username_param
+                session['user_id'] = username_param
+                session.permanent = True
+        except Exception as e:
+            username = username_param
+            session['username'] = username_param
+            session['user_id'] = username_param
+            session.permanent = True
+    elif 'username' in session:
+        username = session['username']
+
+    if not username:
+        return redirect(url_for('login'))
+
+    return render_template('games/menu.html', username=username)
+
+@app.route('/games/matching')
+def games_matching():
+    if 'username' not in session:
+        username_param = request.args.get('user')
+        if username_param:
+            session['username'] = username_param
+            session['user_id'] = username_param
+            session.permanent = True
+        else:
+            return redirect(url_for('login'))
+    return render_template('games/matching.html', username=session['username'])
+
+@app.route('/games/typing')
+def games_typing():
+    if 'username' not in session:
+        username_param = request.args.get('user')
+        if username_param:
+            session['username'] = username_param
+            session['user_id'] = username_param
+            session.permanent = True
+        else:
+            return redirect(url_for('login'))
+    return render_template('games/typing.html', username=session['username'])
+
+@app.route('/games/listening')
+def games_listening():
+    if 'username' not in session:
+        username_param = request.args.get('user')
+        if username_param:
+            session['username'] = username_param
+            session['user_id'] = username_param
+            session.permanent = True
+        else:
+            return redirect(url_for('login'))
+    return render_template('games/listening.html', username=session['username'])
 
 # ==================== 健康檢查 ====================
 
