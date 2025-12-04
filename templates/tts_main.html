@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini TTS Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .header .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header .username {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            padding: 8px 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-logout:hover {
+            background: #d32f2f;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .sidebar {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .conversation-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #conversation-edit {
+            background: #fffef0;
+            border: 2px solid #667eea;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        #conversation-edit:focus {
+            background: #fff;
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .audio-player {
+            margin-top: 15px;
+        }
+
+        audio {
+            width: 100%;
+        }
+
+        .btn-download {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-download:hover {
+            background: #45a049;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ Gemini Multi-Speaker TTS Generator</h1>
+            <div class="user-info">
+                <span class="username">{{ username }}</span>
+                <a href="/dashboard" class="btn-logout" style="background: #4CAF50; margin-right: 10px;">← 返回主控台</a>
+                <button onclick="logout()" class="btn-logout">登出</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('url')">🌐 URL to Conversation</button>
+                <button class="tab" onclick="switchTab('manual')">💬 Manual Conversation</button>
+                <button class="tab" onclick="switchTab('about')">ℹ️ About</button>
+            </div>
+
+            <!-- Sidebar Configuration -->
+            <div class="sidebar">
+                <h3>⚙️ Configuration</h3>
+
+                <div class="form-group">
+                    <label for="api-key">Gemini API Key</label>
+                    <input type="password" id="api-key" placeholder="輸入你的 Gemini API Key">
+                </div>
+
+                <div class="form-group">
+                    <label for="language">Conversation Language</label>
+                    <select id="language">
+                        {% for lang_name, lang_code in languages.items() %}
+                        <option value="{{ lang_code }}">{{ lang_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="model">TTS Model</label>
+                    <select id="model">
+                        <option value="gemini-2.5-flash-preview-tts">gemini-2.5-flash-preview-tts</option>
+                        <option value="gemini-2.5-pro-preview-tts">gemini-2.5-pro-preview-tts</option>
+                    </select>
+                </div>
+
+                <h3 style="margin-top: 20px;">🗣️ Speaker Settings</h3>
+
+                <div class="two-column">
+                    <div class="form-group">
+                        <label for="speaker1-name">Speaker 1 Name</label>
+                        <input type="text" id="speaker1-name" value="Joe">
+                    </div>
+                    <div class="form-group">
+                        <label for="speaker1-voice">Speaker 1 Voice</label>
+                        <select id="speaker1-voice">
+                            {% for voice in voices %}
+                            <option value="{{ voice }}">{{ voice }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="form-group">
+                        <label for="speaker2-name">Speaker 2 Name</label>
+                        <input type="text" id="speaker2-name" value="Jane">
+                    </div>
+                    <div class="form-group">
+                        <label for="speaker2-voice">Speaker 2 Voice</label>
+                        <select id="speaker2-voice">
+                            {% for voice in voices %}
+                            <option value="{{ voice }}" {% if voice == 'Puck' %}selected{% endif %}>{{ voice }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 1: URL to Conversation -->
+            <div id="tab-url" class="tab-content active">
+                <h2>🔗 Generate Conversation from URL</h2>
+                <p style="color: #666; margin-bottom: 20px;">輸入網址來分析網頁內容並生成 AI 對話</p>
+
+                <div class="form-group">
+                    <label for="url-input">Enter webpage URL</label>
+                    <input type="url" id="url-input" placeholder="https://example.com/article">
+                </div>
+
+                <button class="btn-primary" onclick="generateFromURL()">🎬 Generate Conversation & Audio</button>
+
+                <div class="loading" id="loading-url">
+                    <div class="loading-spinner"></div>
+                    <p>生成中，請稍候...</p>
+                </div>
+
+                <div class="error-message" id="error-url"></div>
+                <div class="success-message" id="success-url"></div>
+
+                <div class="result-section" id="result-url">
+                    <h3>📝 Generated Conversation</h3>
+                    <div class="conversation-box" id="conversation-display" style="display: none;"></div>
+
+                    <!-- 可編輯的對話框 -->
+                    <div class="form-group">
+                        <textarea id="conversation-edit" rows="12" style="font-family: monospace; white-space: pre-wrap;"></textarea>
+                        <small style="color: #666; margin-top: 5px; display: block;">💡 你可以編輯對話內容，然後點擊下方按鈕重新生成音頻</small>
+                    </div>
+
+                    <button class="btn-primary" onclick="regenerateAudioFromEdit()" style="margin-bottom: 20px;">
+                        🔄 重新生成音頻
+                    </button>
+
+                    <h3>🎧 Generated Audio</h3>
+                    <div class="audio-player">
+                        <audio controls id="audio-player-url">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <a class="btn-download" id="download-btn-url" download>📥 Download Audio</a>
+                </div>
+            </div>
+
+            <!-- Tab 2: Manual Conversation -->
+            <div id="tab-manual" class="tab-content">
+                <h2>💬 Enter Conversation Manually</h2>
+                <p style="color: #666; margin-bottom: 20px;">手動輸入對話內容</p>
+
+                <div class="form-group">
+                    <label for="conversation-input">Type or paste your conversation below</label>
+                    <textarea id="conversation-input" rows="10" placeholder="Joe: How's it going today Jane?
+Jane: Not too bad, how about you?"></textarea>
+                </div>
+
+                <button class="btn-primary" onclick="generateManual()">🎵 Generate Audio</button>
+
+                <div class="loading" id="loading-manual">
+                    <div class="loading-spinner"></div>
+                    <p>生成中，請稍候...</p>
+                </div>
+
+                <div class="error-message" id="error-manual"></div>
+                <div class="success-message" id="success-manual"></div>
+
+                <div class="result-section" id="result-manual">
+                    <h3>🎧 Generated Audio</h3>
+                    <div class="audio-player">
+                        <audio controls id="audio-player-manual">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <a class="btn-download" id="download-btn-manual" download>📥 Download Audio</a>
+                </div>
+            </div>
+
+            <!-- Tab 3: About -->
+            <div id="tab-about" class="tab-content">
+                <h2>About This App</h2>
+                <p>這個應用使用 Google 的 Gemini API 來分析網頁內容並生成真實的多講者對話與 TTS。</p>
+
+                <h3 style="margin-top: 20px;">Features:</h3>
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                    <li>🔐 <strong>用戶認證</strong>: 使用 Supabase 的安全登入系統</li>
+                    <li>🌐 <strong>URL 分析</strong>: 自動抓取並分析網頁內容</li>
+                    <li>🤖 <strong>AI 對話生成</strong>: 使用 Gemini 2.5 Flash 創建引人入勝的對話</li>
+                    <li>🌍 <strong>多語言支援</strong>: 支援 16 種不同語言的對話生成</li>
+                    <li>🎭 <strong>多講者支援</strong>: 配置最多 2 個不同講者與獨特聲音</li>
+                    <li>🎨 <strong>聲音選擇</strong>: 從多個預建聲音選項中選擇</li>
+                    <li>💾 <strong>音頻導出</strong>: 下載生成的對話為 WAV 文件</li>
+                    <li>🎵 <strong>即時播放</strong>: 直接在應用中聆聽生成的音頻</li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">Available Voices:</h3>
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                    <li><strong>Kore</strong>: 自然、平衡的聲音</li>
+                    <li><strong>Puck</strong>: 充滿活力、俏皮的聲音</li>
+                    <li><strong>Charon</strong>: 深沉、權威的聲音</li>
+                    <li><strong>Fenrir</strong>: 強大、命令式的聲音</li>
+                    <li><strong>Aoede</strong>: 旋律優美、富有表現力的聲音</li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">Supported Languages:</h3>
+                <p>English, Chinese (Simplified/Traditional), Korean, Japanese, Spanish, French, German, Italian, Portuguese, Russian, Arabic, Thai, Vietnamese, Indonesian, Hindi</p>
+
+                <h3 style="margin-top: 20px;">API Key:</h3>
+                <p>從 <a href="https://aistudio.google.com/apikey" target="_blank" style="color: #667eea;">Google AI Studio</a> 獲取你的 Gemini API key</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 登出功能
+        async function logout() {
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                // 即使出錯也重定向到登入頁
+                window.location.href = '/login';
+            }
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function generateFromURL() {
+            const url = document.getElementById('url-input').value.trim();
+            const apiKey = document.getElementById('api-key').value.trim();
+
+            if (!url || !apiKey) {
+                showError('error-url', '請輸入 URL 和 API Key');
+                return;
+            }
+
+            const loadingEl = document.getElementById('loading-url');
+            const resultEl = document.getElementById('result-url');
+            const errorEl = document.getElementById('error-url');
+            const successEl = document.getElementById('success-url');
+
+            loadingEl.classList.add('show');
+            resultEl.classList.remove('show');
+            errorEl.classList.remove('show');
+            successEl.classList.remove('show');
+
+            try {
+                const response = await fetch('/api/tts/generate-from-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        api_key: apiKey,
+                        speaker1_name: document.getElementById('speaker1-name').value,
+                        speaker2_name: document.getElementById('speaker2-name').value,
+                        speaker1_voice: document.getElementById('speaker1-voice').value,
+                        speaker2_voice: document.getElementById('speaker2-voice').value,
+                        language: document.getElementById('language').value,
+                        model: document.getElementById('model').value
+                    })
+                });
+
+                const data = await response.json();
+
+                loadingEl.classList.remove('show');
+
+                if (data.success) {
+                    // 填充到可編輯框
+                    document.getElementById('conversation-edit').value = data.conversation;
+                    document.getElementById('conversation-display').textContent = data.conversation;
+
+                    // 更新音頻
+                    document.getElementById('audio-player-url').src = data.audio_url;
+                    document.getElementById('download-btn-url').href = data.audio_url;
+                    document.getElementById('download-btn-url').download = data.audio_file;
+
+                    resultEl.classList.add('show');
+                    showSuccess('success-url', '✅ 音頻生成成功！你可以編輯對話後重新生成音頻');
+                } else {
+                    showError('error-url', data.error || '生成失敗');
+                }
+            } catch (error) {
+                loadingEl.classList.remove('show');
+                showError('error-url', '錯誤: ' + error.message);
+            }
+        }
+
+        async function regenerateAudioFromEdit() {
+            const conversation = document.getElementById('conversation-edit').value.trim();
+            const apiKey = document.getElementById('api-key').value.trim();
+
+            if (!conversation || !apiKey) {
+                showError('error-url', '請確保對話內容和 API Key 都已填寫');
+                return;
+            }
+
+            const loadingEl = document.getElementById('loading-url');
+            const errorEl = document.getElementById('error-url');
+            const successEl = document.getElementById('success-url');
+
+            loadingEl.classList.add('show');
+            errorEl.classList.remove('show');
+            successEl.classList.remove('show');
+
+            try {
+                const response = await fetch('/api/tts/generate-manual', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        conversation: conversation,
+                        api_key: apiKey,
+                        speaker1_name: document.getElementById('speaker1-name').value,
+                        speaker2_name: document.getElementById('speaker2-name').value,
+                        speaker1_voice: document.getElementById('speaker1-voice').value,
+                        speaker2_voice: document.getElementById('speaker2-voice').value,
+                        model: document.getElementById('model').value
+                    })
+                });
+
+                const data = await response.json();
+
+                loadingEl.classList.remove('show');
+
+                if (data.success) {
+                    // 更新音頻
+                    document.getElementById('audio-player-url').src = data.audio_url;
+                    document.getElementById('download-btn-url').href = data.audio_url;
+                    document.getElementById('download-btn-url').download = data.audio_file;
+
+                    showSuccess('success-url', '✅ 音頻重新生成成功！');
+                } else {
+                    showError('error-url', data.error || '生成失敗');
+                }
+            } catch (error) {
+                loadingEl.classList.remove('show');
+                showError('error-url', '錯誤: ' + error.message);
+            }
+        }
+
+        async function generateManual() {
+            const conversation = document.getElementById('conversation-input').value.trim();
+            const apiKey = document.getElementById('api-key').value.trim();
+
+            if (!conversation || !apiKey) {
+                showError('error-manual', '請輸入對話內容和 API Key');
+                return;
+            }
+
+            const loadingEl = document.getElementById('loading-manual');
+            const resultEl = document.getElementById('result-manual');
+            const errorEl = document.getElementById('error-manual');
+            const successEl = document.getElementById('success-manual');
+
+            loadingEl.classList.add('show');
+            resultEl.classList.remove('show');
+            errorEl.classList.remove('show');
+            successEl.classList.remove('show');
+
+            try {
+                const response = await fetch('/api/tts/generate-manual', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        conversation: conversation,
+                        api_key: apiKey,
+                        speaker1_name: document.getElementById('speaker1-name').value,
+                        speaker2_name: document.getElementById('speaker2-name').value,
+                        speaker1_voice: document.getElementById('speaker1-voice').value,
+                        speaker2_voice: document.getElementById('speaker2-voice').value,
+                        model: document.getElementById('model').value
+                    })
+                });
+
+                const data = await response.json();
+
+                loadingEl.classList.remove('show');
+
+                if (data.success) {
+                    document.getElementById('audio-player-manual').src = data.audio_url;
+                    document.getElementById('download-btn-manual').href = data.audio_url;
+                    document.getElementById('download-btn-manual').download = data.audio_file;
+
+                    resultEl.classList.add('show');
+                    showSuccess('success-manual', '✅ 音頻生成成功！');
+                } else {
+                    showError('error-manual', data.error || '生成失敗');
+                }
+            } catch (error) {
+                loadingEl.classList.remove('show');
+                showError('error-manual', '錯誤: ' + error.message);
+            }
+        }
+
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = '❌ ' + message;
+            el.classList.add('show');
+        }
+
+        function showSuccess(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.classList.add('show');
+        }
+    </script>
+</body>
+</html>
