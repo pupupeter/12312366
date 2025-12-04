@@ -768,8 +768,8 @@
 
             try {
                 const endpoint = currentLanguage === 'korean'
-                    ? '/korean-app/api/saved-words'
-                    : '/chinese-app/api/saved-words';
+                    ? '/korean/api/saved-words'
+                    : '/chinese/api/saved-words';
 
                 const response = await fetch(endpoint);
                 const data = await response.json();
@@ -779,7 +779,7 @@
                     gameArea.innerHTML = `
                         <div class="loading">
                             📚 您還沒有收藏任何${currentLanguage === 'korean' ? '韓文' : '中文'}單字<br><br>
-                            <a href="${currentLanguage === 'korean' ? '/korean-app' : '/chinese-app'}"
+                            <a href="${currentLanguage === 'korean' ? '/korean' : '/chinese'}"
                                class="btn btn-primary btn-large">
                                 去收藏單字
                             </a>
@@ -792,7 +792,7 @@
                         <div class="loading">
                             📚 至少需要 4 個單字才能開始遊戲<br>
                             目前只有 ${words.length} 個單字<br><br>
-                            <a href="${currentLanguage === 'korean' ? '/korean-app' : '/chinese-app'}"
+                            <a href="${currentLanguage === 'korean' ? '/korean' : '/chinese'}"
                                class="btn btn-primary btn-large">
                                 去收藏更多單字
                             </a>

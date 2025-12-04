@@ -308,8 +308,8 @@
 
             try {
                 const endpoint = currentLanguage === 'korean'
-                    ? '/korean-app/api/saved-words'
-                    : '/chinese-app/api/saved-words';
+                    ? '/korean/api/saved-words'
+                    : '/chinese/api/saved-words';
 
                 const response = await fetch(endpoint);
                 const data = await response.json();
@@ -319,7 +319,7 @@
                     gameArea.innerHTML = `
                         <div class="message">
                             📚 您還沒有收藏任何${currentLanguage === 'korean' ? '韓文' : '中文'}單字<br>
-                            <a href="${currentLanguage === 'korean' ? '/korean-app' : '/chinese-app'}"
+                            <a href="${currentLanguage === 'korean' ? '/korean' : '/chinese'}"
                                class="btn btn-primary" style="margin-top: 20px;">
                                 去收藏單字
                             </a>
