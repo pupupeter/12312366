@@ -483,6 +483,17 @@ Jane: Not too bad, how about you?"></textarea>
     </div>
 
     <script>
+        // Base64 轉 Blob 工具函數
+        function base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], { type: mimeType });
+        }
+
         // 登出功能
         async function logout() {
             try {
@@ -563,10 +574,14 @@ Jane: Not too bad, how about you?"></textarea>
                     document.getElementById('conversation-edit').value = data.conversation;
                     document.getElementById('conversation-display').textContent = data.conversation;
 
+                    // 將 base64 轉換為 blob URL
+                    const audioBlob = base64ToBlob(data.audio_data, 'audio/wav');
+                    const audioUrl = URL.createObjectURL(audioBlob);
+
                     // 更新音頻
-                    document.getElementById('audio-player-url').src = data.audio_url;
-                    document.getElementById('download-btn-url').href = data.audio_url;
-                    document.getElementById('download-btn-url').download = data.audio_file;
+                    document.getElementById('audio-player-url').src = audioUrl;
+                    document.getElementById('download-btn-url').href = audioUrl;
+                    document.getElementById('download-btn-url').download = `tts_${Date.now()}.wav`;
 
                     resultEl.classList.add('show');
                     showSuccess('success-url', '✅ 音頻生成成功！你可以編輯對話後重新生成音頻');
@@ -618,10 +633,14 @@ Jane: Not too bad, how about you?"></textarea>
                 loadingEl.classList.remove('show');
 
                 if (data.success) {
+                    // 將 base64 轉換為 blob URL
+                    const audioBlob = base64ToBlob(data.audio_data, 'audio/wav');
+                    const audioUrl = URL.createObjectURL(audioBlob);
+
                     // 更新音頻
-                    document.getElementById('audio-player-url').src = data.audio_url;
-                    document.getElementById('download-btn-url').href = data.audio_url;
-                    document.getElementById('download-btn-url').download = data.audio_file;
+                    document.getElementById('audio-player-url').src = audioUrl;
+                    document.getElementById('download-btn-url').href = audioUrl;
+                    document.getElementById('download-btn-url').download = `tts_${Date.now()}.wav`;
 
                     showSuccess('success-url', '✅ 音頻重新生成成功！');
                 } else {
@@ -674,9 +693,13 @@ Jane: Not too bad, how about you?"></textarea>
                 loadingEl.classList.remove('show');
 
                 if (data.success) {
-                    document.getElementById('audio-player-manual').src = data.audio_url;
-                    document.getElementById('download-btn-manual').href = data.audio_url;
-                    document.getElementById('download-btn-manual').download = data.audio_file;
+                    // 將 base64 轉換為 blob URL
+                    const audioBlob = base64ToBlob(data.audio_data, 'audio/wav');
+                    const audioUrl = URL.createObjectURL(audioBlob);
+
+                    document.getElementById('audio-player-manual').src = audioUrl;
+                    document.getElementById('download-btn-manual').href = audioUrl;
+                    document.getElementById('download-btn-manual').download = `tts_manual_${Date.now()}.wav`;
 
                     resultEl.classList.add('show');
                     showSuccess('success-manual', '✅ 音頻生成成功！');
