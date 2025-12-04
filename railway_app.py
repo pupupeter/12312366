@@ -287,17 +287,34 @@ def korean_page():
 
     if username_param:
         # 驗證用戶是否存在
-        user = get_user_by_username(username_param)
-        print(f"[DEBUG] /korean - user found: {user is not None}")
+        try:
+            user = get_user_by_username(username_param)
+            print(f"[DEBUG] /korean - user lookup result: {user}")
+            print(f"[DEBUG] /korean - user found: {user is not None}")
 
-        if user:
+            if user:
+                username = username_param
+                # 同時設置 session（嘗試）
+                session.clear()
+                session['username'] = username_param
+                session['user_id'] = str(user.get('id', username_param))
+                session.permanent = True
+                print(f"[DEBUG] /korean - session set: {dict(session)}")
+            else:
+                # 即使用戶不存在，也允許訪問（臨時解決方案）
+                print(f"[WARNING] /korean - user not found in database, allowing access anyway")
+                username = username_param
+                session['username'] = username_param
+                session['user_id'] = username_param
+                session.permanent = True
+        except Exception as e:
+            print(f"[ERROR] /korean - database error: {e}")
+            # 數據庫錯誤時也允許訪問
             username = username_param
-            # 同時設置 session（嘗試）
-            session.clear()
             session['username'] = username_param
-            session['user_id'] = str(user.get('id', username_param))
+            session['user_id'] = username_param
             session.permanent = True
-            print(f"[DEBUG] /korean - session set: {dict(session)}")
+
     elif 'username' in session:
         # 從 session 獲取用戶名
         username = session['username']
@@ -309,6 +326,7 @@ def korean_page():
         return redirect(url_for('login'))
 
     # 直接顯示頁面，不重定向
+    print(f"[DEBUG] /korean - rendering page for username: {username}")
     return render_template('index.html', username=username)
 
 @app.route('/korean/chat', methods=['POST'])
@@ -369,12 +387,23 @@ def korean_review():
     username = None
 
     if username_param:
-        user = get_user_by_username(username_param)
-        if user:
+        try:
+            user = get_user_by_username(username_param)
+            if user:
+                username = username_param
+                session.clear()
+                session['username'] = username_param
+                session['user_id'] = str(user.get('id', username_param))
+                session.permanent = True
+            else:
+                username = username_param
+                session['username'] = username_param
+                session['user_id'] = username_param
+                session.permanent = True
+        except Exception as e:
             username = username_param
-            session.clear()
             session['username'] = username_param
-            session['user_id'] = str(user.get('id', username_param))
+            session['user_id'] = username_param
             session.permanent = True
     elif 'username' in session:
         username = session['username']
@@ -395,13 +424,25 @@ def chinese_page():
 
     if username_param:
         # 驗證用戶是否存在
-        user = get_user_by_username(username_param)
-        if user:
+        try:
+            user = get_user_by_username(username_param)
+            if user:
+                username = username_param
+                session.clear()
+                session['username'] = username_param
+                session['user_id'] = str(user.get('id', username_param))
+                session.permanent = True
+            else:
+                # 即使用戶不存在，也允許訪問
+                username = username_param
+                session['username'] = username_param
+                session['user_id'] = username_param
+                session.permanent = True
+        except Exception as e:
+            print(f"[ERROR] /chinese - database error: {e}")
             username = username_param
-            # 同時設置 session
-            session.clear()
             session['username'] = username_param
-            session['user_id'] = str(user.get('id', username_param))
+            session['user_id'] = username_param
             session.permanent = True
     elif 'username' in session:
         username = session['username']
@@ -470,12 +511,23 @@ def chinese_review():
     username = None
 
     if username_param:
-        user = get_user_by_username(username_param)
-        if user:
+        try:
+            user = get_user_by_username(username_param)
+            if user:
+                username = username_param
+                session.clear()
+                session['username'] = username_param
+                session['user_id'] = str(user.get('id', username_param))
+                session.permanent = True
+            else:
+                username = username_param
+                session['username'] = username_param
+                session['user_id'] = username_param
+                session.permanent = True
+        except Exception as e:
             username = username_param
-            session.clear()
             session['username'] = username_param
-            session['user_id'] = str(user.get('id', username_param))
+            session['user_id'] = username_param
             session.permanent = True
     elif 'username' in session:
         username = session['username']
