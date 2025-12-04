@@ -877,11 +877,15 @@ def games_listening():
 
 @app.route('/health')
 def health():
+    gemini_key = os.getenv("GEMINI_API_KEY")
     return jsonify({
         'status': 'healthy',
         'agents_available': AGENTS_AVAILABLE,
         'korean_agent': korean_agent is not None,
-        'chinese_agent': chinese_agent is not None
+        'chinese_agent': chinese_agent is not None,
+        'gemini_key_exists': gemini_key is not None,
+        'gemini_key_length': len(gemini_key) if gemini_key else 0,
+        'gemini_key_preview': gemini_key[:10] + '...' if gemini_key else 'NOT SET'
     })
 
 # ==================== 啟動應用 ====================
