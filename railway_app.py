@@ -15,6 +15,7 @@ import time
 import json
 from translations import get_translation
 from korean_analysis import generate_graph_html
+from chinese_analysis import generate_chinese_graph_html
 
 # 載入環境變數
 try:
@@ -212,6 +213,46 @@ class ChineseVocabTool(Tool):
 
         except Exception as e:
             return f"查詢詞彙時出錯：{str(e)}"
+
+# 中文分詞翻譯工具
+class ChineseWordAnalysisTool(Tool):
+    name = "chinese_word_analysis"
+    description = "Analyzes Chinese text: tokenizes, provides pinyin, definitions and example sentences."
+    inputs = {"text": {"type": "string", "description": "Chinese text to analyze."}}
+    output_type = "string"
+
+    def __init__(self, model, **kwargs):
+        super().__init__(**kwargs)
+        self.model = model
+
+    def forward(self, text: str) -> str:
+        prompt = f"""
+請對以下中文內容進行詳細分析：
+
+1. 首先進行分詞，找出所有重要的詞彙（名詞、動詞、形容詞等），忽略無關的標點符號和格式
+2. 只提取中文詞彙，忽略英文、數字等
+3. 對每個詞彙提供以下資訊：
+   - 中文原文
+   - 拼音（漢語拼音）
+   - 中文定義/解釋
+   - 中文例句（使用該詞彙的簡單例句）
+
+請以JSON格式輸出，結構如下：
+[
+  {{
+    "chinese": "中文詞彙",
+    "pinyin": "漢語拼音",
+    "definition": "中文定義解釋",
+    "example": "中文例句"
+  }}
+]
+
+中文內容：
+{text}
+"""
+        messages = [{"role": "user", "content": prompt}]
+        response = self.model(messages)
+        return response.content if hasattr(response, 'content') else str(response)
 
 # 初始化 AI 模型和 Agent
 try:
@@ -801,6 +842,195 @@ def chinese_review():
     if not username:
         return redirect(url_for('login'))
     return render_template('review22.html', username=username)
+
+# 中文文章分析路由
+@app.route('/chinese/process', methods=['POST'])
+def chinese_process():
+    if 'username' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.json
+    url = data.get('url')
+    text = data.get('text')
+    input_type = data.get('type', 'url')
+
+    if not url and not text:
+        return jsonify({'error': '請提供網址或純文字'}), 400
+
+    # 生成唯一的處理ID
+    process_id = str(int(time.time() * 1000))
+    processing_status[process_id] = {
+        'status': 'processing',
+        'message': '正在處理中...',
+        'progress': 0
+    }
+
+    # 在背景執行處理
+    if input_type == 'text' and text:
+        thread = threading.Thread(target=process_chinese_text_analysis, args=(text, process_id))
+    else:
+        if not url.startswith('http'):
+            url = 'https://' + url
+        thread = threading.Thread(target=process_chinese_url_analysis, args=(url, process_id))
+    thread.start()
+
+    return jsonify({'process_id': process_id})
+
+@app.route('/chinese/status/<process_id>')
+def chinese_status(process_id):
+    status = processing_status.get(process_id, {'status': 'not_found'})
+    return jsonify(status)
+
+@app.route('/chinese/result/<filename>')
+def chinese_result(filename):
+    try:
+        return send_file(filename, as_attachment=False, mimetype='text/html; charset=utf-8')
+    except FileNotFoundError:
+        return jsonify({'error': '文件未找到'}), 404
+
+def process_chinese_text_analysis(text, process_id):
+    """處理純文字輸入的中文分析"""
+    try:
+        processing_status[process_id] = {
+            'status': 'processing',
+            'message': '正在初始化AI模型...',
+            'progress': 10
+        }
+
+        model = LiteLLMModel(model_id="gemini/gemini-2.0-flash", token=os.getenv("GEMINI_API_KEY"))
+        chinese_tool = ChineseWordAnalysisTool(model=model)
+
+        processing_status[process_id] = {
+            'status': 'processing',
+            'message': '正在進行中文詞彙分析...',
+            'progress': 40
+        }
+
+        content = text[:10000]
+        words_json_str = chinese_tool.forward(content)
+
+        processing_status[process_id] = {
+            'status': 'processing',
+            'message': '正在解析分析結果...',
+            'progress': 70
+        }
+
+        # 解析JSON
+        cleaned_json = words_json_str.strip()
+        start_idx = cleaned_json.find('[')
+        end_idx = cleaned_json.rfind(']')
+
+        if start_idx != -1 and end_idx != -1:
+            json_part = cleaned_json[start_idx:end_idx+1]
+            words = json.loads(json_part)
+
+            processing_status[process_id] = {
+                'status': 'processing',
+                'message': '正在生成知識圖譜...',
+                'progress': 90
+            }
+
+            html_content = generate_chinese_graph_html(words, '純文字輸入')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"chinese_graph_{len(words)}words_{timestamp}.html"
+
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+
+            processing_status[process_id] = {
+                'status': 'completed',
+                'message': f'成功生成 {len(words)} 個中文詞彙的知識圖譜',
+                'progress': 100,
+                'filename': filename,
+                'word_count': len(words)
+            }
+        else:
+            raise ValueError("無法找到有效的JSON數組")
+
+    except Exception as e:
+        processing_status[process_id] = {
+            'status': 'error',
+            'message': f'處理失敗: {str(e)}'
+        }
+
+def process_chinese_url_analysis(url, process_id):
+    """處理URL輸入的中文分析"""
+    try:
+        processing_status[process_id] = {
+            'status': 'processing',
+            'message': '正在初始化AI模型...',
+            'progress': 10
+        }
+
+        model = LiteLLMModel(model_id="gemini/gemini-2.0-flash", token=os.getenv("GEMINI_API_KEY"))
+        visit_tool = VisitWebpageTool()
+        chinese_tool = ChineseWordAnalysisTool(model=model)
+
+        processing_status[process_id] = {
+            'status': 'processing',
+            'message': '正在抓取網頁內容...',
+            'progress': 30
+        }
+
+        content = visit_tool.forward(url)
+        if content.startswith("Request timed out") or content.startswith("Error"):
+            processing_status[process_id] = {
+                'status': 'error',
+                'message': f'抓取網頁失敗: {content}'
+            }
+            return
+
+        processing_status[process_id] = {
+            'status': 'processing',
+            'message': '正在進行中文詞彙分析...',
+            'progress': 60
+        }
+
+        words_json_str = chinese_tool.forward(content)
+
+        processing_status[process_id] = {
+            'status': 'processing',
+            'message': '正在解析分析結果...',
+            'progress': 80
+        }
+
+        # 解析JSON
+        cleaned_json = words_json_str.strip()
+        start_idx = cleaned_json.find('[')
+        end_idx = cleaned_json.rfind(']')
+
+        if start_idx != -1 and end_idx != -1:
+            json_part = cleaned_json[start_idx:end_idx+1]
+            words = json.loads(json_part)
+
+            processing_status[process_id] = {
+                'status': 'processing',
+                'message': '正在生成知識圖譜...',
+                'progress': 90
+            }
+
+            html_content = generate_chinese_graph_html(words, url)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"chinese_graph_{len(words)}words_{timestamp}.html"
+
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+
+            processing_status[process_id] = {
+                'status': 'completed',
+                'message': f'成功生成 {len(words)} 個中文詞彙的知識圖譜',
+                'progress': 100,
+                'filename': filename,
+                'word_count': len(words)
+            }
+        else:
+            raise ValueError("無法找到有效的JSON數組")
+
+    except Exception as e:
+        processing_status[process_id] = {
+            'status': 'error',
+            'message': f'處理失敗: {str(e)}'
+        }
 
 # ==================== 遊戲系統 ====================
 
