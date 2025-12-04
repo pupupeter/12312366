@@ -1276,8 +1276,8 @@
 
         // 打開 Railway 應用（傳遞用戶名）
         function openRailwayApp(appType) {
-            // Railway 應用網址（部署後請替換為實際網址）
-            const RAILWAY_URL = 'https://你的railway網址.up.railway.app';
+            // 從後端獲取 Railway URL
+            const RAILWAY_URL = "{{ railway_url }}";
 
             // 根據環境決定使用哪個網址
             const railwayUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
