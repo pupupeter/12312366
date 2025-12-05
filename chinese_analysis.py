@@ -381,15 +381,26 @@ def generate_chinese_graph_html(words_data, url):
         }})
         .on("dblclick", function(event, d) {{
             event.stopPropagation();
+
+            // 解析 TOCFL 級數（例如 "A1" -> level_category: "A", level_number: "1"）
+            const tocflLevel = d.tocfl_level || '未分級';
+            let levelCategory = tocflLevel;
+            let levelNumber = '';
+
+            if (tocflLevel !== '未分級' && tocflLevel.length >= 2) {{
+                levelCategory = tocflLevel.charAt(0);  // 取第一個字母 (A, B, C, D, E)
+                levelNumber = tocflLevel.substring(1);  // 取後面的數字 (1, 2, 3, 4, 5)
+            }}
+
             saveWord({{
                 chinese: d.chinese,
-                english: d.pinyin || '',  // 暫時用拼音當 English（可後續改進）
+                english: d.definition || '',  // 使用定義作為英文翻譯
                 definition: d.definition,
                 example_chinese: d.example || '',
-                example_english: d.example || '',
-                level: d.tocfl_level || '未分級',
-                level_category: d.tocfl_level || '未分級',
-                level_number: d.tocfl_level || ''
+                example_english: '',  // 中文知識圖譜沒有例句英文翻譯
+                level: tocflLevel,
+                level_category: levelCategory,
+                level_number: levelNumber
             }});
         }});
 
