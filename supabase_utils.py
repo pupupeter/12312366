@@ -72,7 +72,7 @@ def add_korean_word(user_id: str, word_data: Dict) -> Dict:
         if existing.data:
             return {'message': '單字已存在於收藏中', 'exists': True}
 
-        # 準備數據（韓文不需要分級）
+        # 準備數據（韓文不需要分級，但資料庫表有 level 欄位需要填入空值）
         data = {
             'user_id': user_id,
             'korean': word_data.get('korean'),
@@ -80,6 +80,7 @@ def add_korean_word(user_id: str, word_data: Dict) -> Dict:
             'definition': word_data.get('definition'),
             'example_korean': word_data.get('example_korean'),
             'example_chinese': word_data.get('example_chinese'),
+            'level': '',  # 韓文不需要級數，設為空字串
             'saved_at': datetime.now().isoformat()
         }
 
