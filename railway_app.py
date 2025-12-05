@@ -228,27 +228,31 @@ class ChineseWordAnalysisTool(Tool):
 
     def forward(self, text: str) -> str:
         prompt = f"""
-請對以下中文內容進行詳細分析：
+Analyze the following Chinese text and extract vocabulary words.
 
-1. 首先進行分詞，找出所有重要的詞彙（名詞、動詞、形容詞等），忽略無關的標點符號和格式
-2. 只提取中文詞彙，忽略英文、數字等
-3. 對每個詞彙提供以下資訊：
-   - 中文原文
-   - 拼音（漢語拼音）
-   - 中文定義/解釋
-   - 中文例句（使用該詞彙的簡單例句）
+CRITICAL REQUIREMENTS:
+1. Extract important Chinese words (nouns, verbs, adjectives, etc.)
+2. For EACH word provide:
+   - chinese: The Chinese word
+   - english: English translation (MUST BE ENGLISH, NOT CHINESE!)
+   - definition: English definition (MUST BE ENGLISH, NOT CHINESE!)
+   - example_chinese: Chinese example sentence
+   - example_english: English translation of example (MUST BE ENGLISH, NOT CHINESE!)
 
-請以JSON格式輸出，結構如下：
+IMPORTANT: "english", "definition", and "example_english" MUST be in English language ONLY.
+
+JSON format:
 [
   {{
-    "chinese": "中文詞彙",
-    "pinyin": "漢語拼音",
-    "definition": "中文定義解釋",
-    "example": "中文例句"
+    "chinese": "學習",
+    "english": "learn, study",
+    "definition": "to acquire knowledge or skills through study or practice",
+    "example_chinese": "我每天學習中文。",
+    "example_english": "I study Chinese every day."
   }}
 ]
 
-中文內容：
+Chinese text:
 {text}
 """
         messages = [{"role": "user", "content": prompt}]

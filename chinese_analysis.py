@@ -17,9 +17,10 @@ def generate_chinese_graph_html(words_data, url):
         nodes.append({
             'id': i,
             'chinese': word.get('chinese', 'N/A'),
-            'pinyin': word.get('pinyin', 'N/A'),
+            'english': word.get('english', 'N/A'),
             'definition': word.get('definition', 'N/A'),
-            'example': word.get('example', 'N/A'),
+            'example_chinese': word.get('example_chinese', 'N/A'),
+            'example_english': word.get('example_english', 'N/A'),
             'tocfl_level': word.get('tocfl_level', '未分級'),
             'group': i % 5  # 用於顏色分組
         })
@@ -93,11 +94,6 @@ def generate_chinese_graph_html(words_data, url):
             font-weight: bold;
             color: #ffeb3b;
             margin-bottom: 5px;
-        }}
-        .tooltip .pinyin {{
-            font-size: 14px;
-            color: #4ecdc4;
-            margin-bottom: 8px;
         }}
         .tooltip .definition {{
             margin-bottom: 8px;
@@ -262,15 +258,6 @@ def generate_chinese_graph_html(words_data, url):
             .attr("fill", "white")
             .attr("pointer-events", "none");
 
-        // 拼音標籤
-        node.append("text")
-            .text(d => d.pinyin)
-            .attr("x", 0)
-            .attr("y", 35)
-            .attr("text-anchor", "middle")
-            .attr("font-size", "10px")
-            .attr("fill", "#4ecdc4")
-            .attr("pointer-events", "none");
 
         // 工具提示
         const tooltip = d3.select("body").append("div")
@@ -366,9 +353,10 @@ def generate_chinese_graph_html(words_data, url):
                 .style("opacity", .9);
             tooltip.html(`
                 <div class="chinese">${{d.chinese}} <span style="background: #ff6b6b; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-left: 5px;">${{d.tocfl_level}}</span></div>
-                <div class="pinyin">${{d.pinyin}}</div>
-                <div class="definition"><strong>定義:</strong> ${{d.definition}}</div>
-                <div class="example"><strong>例句:</strong> ${{d.example}}</div>
+                <div style="margin-bottom: 8px; margin-top: 5px;"><strong>English:</strong> ${{d.english}}</div>
+                <div class="definition" style="margin-bottom: 8px;"><strong>Definition:</strong> ${{d.definition}}</div>
+                <div class="example" style="margin-bottom: 5px;"><strong>例句:</strong> ${{d.example_chinese}}</div>
+                <div class="example"><strong>Example:</strong> ${{d.example_english}}</div>
                 <div style="margin-top: 10px; font-size: 10px; color: #4ecdc4;">💡 雙擊節點收藏單字</div>
             `)
                 .style("left", (event.pageX + 10) + "px")
@@ -394,10 +382,10 @@ def generate_chinese_graph_html(words_data, url):
 
             saveWord({{
                 chinese: d.chinese,
-                english: d.definition || '',  // 使用定義作為英文翻譯
-                definition: d.definition,
-                example_chinese: d.example || '',
-                example_english: '',  // 中文知識圖譜沒有例句英文翻譯
+                english: d.english || '',
+                definition: d.definition || '',
+                example_chinese: d.example_chinese || '',
+                example_english: d.example_english || '',
                 level: tocflLevel,
                 level_category: levelCategory,
                 level_number: levelNumber
