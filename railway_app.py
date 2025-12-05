@@ -482,8 +482,14 @@ def save_korean_word():
     word_data = request_data.get('word', request_data)  # 兼容兩種格式
 
     print(f"[韓文收藏] 用戶: {user_id}, 單字: {word_data.get('korean')}")
+    print(f"[韓文收藏] 完整資料: {word_data}")
 
     result = add_korean_word(user_id, word_data)
+
+    # 如果有錯誤，返回 500 狀態碼
+    if 'error' in result and result.get('success') == False:
+        return jsonify(result), 500
+
     return jsonify(result)
 
 @app.route('/korean/delete-word', methods=['POST'])
@@ -805,8 +811,14 @@ def save_chinese_word():
     word_data = request_data.get('word', request_data)  # 兼容兩種格式
 
     print(f"[中文收藏] 用戶: {user_id}, 詞彙: {word_data.get('chinese')}")
+    print(f"[中文收藏] 完整資料: {word_data}")
 
     result = add_chinese_word(user_id, word_data)
+
+    # 如果有錯誤，返回 500 狀態碼
+    if 'error' in result and result.get('success') == False:
+        return jsonify(result), 500
+
     return jsonify(result)
 
 @app.route('/chinese/delete-word', methods=['POST'])

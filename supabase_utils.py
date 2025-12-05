@@ -72,7 +72,7 @@ def add_korean_word(user_id: str, word_data: Dict) -> Dict:
         if existing.data:
             return {'message': '單字已存在於收藏中', 'exists': True}
 
-        # 準備數據
+        # 準備數據（韓文不需要分級）
         data = {
             'user_id': user_id,
             'korean': word_data.get('korean'),
@@ -80,18 +80,21 @@ def add_korean_word(user_id: str, word_data: Dict) -> Dict:
             'definition': word_data.get('definition'),
             'example_korean': word_data.get('example_korean'),
             'example_chinese': word_data.get('example_chinese'),
-            'level': word_data.get('level', '未分級'),
             'saved_at': datetime.now().isoformat()
         }
 
+        print(f"[DB] 準備插入的韓文資料: {data}")
+
         # 插入數據
         response = supabase.table('korean_words').insert(data).execute()
+
+        print(f"[DB] 插入成功: {response.data}")
 
         return {'message': '單字已收藏', 'exists': False, 'data': response.data}
 
     except Exception as e:
         print(f"Error adding Korean word: {e}")
-        return {'error': str(e)}, 500
+        return {'error': str(e), 'success': False}
 
 def delete_korean_word(user_id: str, korean: str) -> Dict:
     """刪除韓文單字"""
@@ -108,7 +111,7 @@ def delete_korean_word(user_id: str, korean: str) -> Dict:
 
     except Exception as e:
         print(f"Error deleting Korean word: {e}")
-        return {'error': str(e)}, 500
+        return {'error': str(e), 'success': False}
 
 # ==================== 中文單字操作 ====================
 
@@ -155,14 +158,18 @@ def add_chinese_word(user_id: str, word_data: Dict) -> Dict:
             'saved_at': datetime.now().isoformat()
         }
 
+        print(f"[DB] 準備插入的資料: {data}")
+
         # 插入數據
         response = supabase.table('chinese_words').insert(data).execute()
+
+        print(f"[DB] 插入成功: {response.data}")
 
         return {'message': '單字已收藏', 'exists': False, 'data': response.data}
 
     except Exception as e:
         print(f"Error adding Chinese word: {e}")
-        return {'error': str(e)}, 500
+        return {'error': str(e), 'success': False}
 
 def delete_chinese_word(user_id: str, chinese: str) -> Dict:
     """刪除中文單字"""
@@ -179,7 +186,7 @@ def delete_chinese_word(user_id: str, chinese: str) -> Dict:
 
     except Exception as e:
         print(f"Error deleting Chinese word: {e}")
-        return {'error': str(e)}, 500
+        return {'error': str(e), 'success': False}
 
 # ==================== 用戶帳號操作 ====================
 
