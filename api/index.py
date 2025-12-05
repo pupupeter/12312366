@@ -67,6 +67,29 @@ VOICE_OPTIONS = ["Kore", "Puck", "Charon", "Fenrir", "Aoede"]
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+def pcm_to_wav(pcm_data, sample_rate=24000, channels=1, sample_width=2):
+    """
+    將 PCM 原始音頻數據轉換為 WAV 格式
+
+    參數：
+    - pcm_data: 原始 PCM 字節數據
+    - sample_rate: 採樣率 (Hz)，Gemini 預設 24000
+    - channels: 聲道數，1=單聲道，2=立體聲
+    - sample_width: 每個樣本的字節數，2=16bit
+
+    返回：
+    - WAV 格式的字節數據
+    """
+    buffer = io.BytesIO()
+    with wave.open(buffer, 'wb') as wav_file:
+        wav_file.setnchannels(channels)
+        wav_file.setsampwidth(sample_width)
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(pcm_data)
+
+    buffer.seek(0)
+    return buffer.read()
+
 def fetch_webpage(url):
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
@@ -328,11 +351,15 @@ def tts_generate_from_url():
             )
         )
 
-        audio_data = response.candidates[0].content.parts[0].inline_data.data
+        # 獲取原始 PCM 音頻數據
+        pcm_data = response.candidates[0].content.parts[0].inline_data.data
 
-        # 將音頻轉為 base64 直接返回（避免文件系統問題）
+        # 轉換 PCM 為標準 WAV 格式
+        wav_data = pcm_to_wav(pcm_data, sample_rate=24000, channels=1, sample_width=2)
+
+        # 將 WAV 音頻轉為 base64
         import base64
-        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+        audio_base64 = base64.b64encode(wav_data).decode('utf-8')
 
         return jsonify({
             'success': True,
@@ -398,11 +425,15 @@ def tts_generate_manual():
             )
         )
 
-        audio_data = response.candidates[0].content.parts[0].inline_data.data
+        # 獲取原始 PCM 音頻數據
+        pcm_data = response.candidates[0].content.parts[0].inline_data.data
 
-        # 將音頻轉為 base64
+        # 轉換 PCM 為標準 WAV 格式
+        wav_data = pcm_to_wav(pcm_data, sample_rate=24000, channels=1, sample_width=2)
+
+        # 將 WAV 音頻轉為 base64
         import base64
-        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+        audio_base64 = base64.b64encode(wav_data).decode('utf-8')
 
         return jsonify({
             'success': True,
