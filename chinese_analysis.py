@@ -14,6 +14,21 @@ def generate_chinese_graph_html(words_data, url):
 
     # 創建節點
     for i, word in enumerate(words_data):
+        tocfl_level = word.get('tocfl_level', '未分級')
+        # 根據 TOCFL 級數分組（用於顏色）
+        if tocfl_level.startswith('A'):
+            group = 0  # 入門級 A1-A2
+        elif tocfl_level.startswith('B'):
+            group = 1  # 基礎級 B1-B2
+        elif tocfl_level.startswith('C'):
+            group = 2  # 進階級 C1-C2
+        elif tocfl_level.startswith('D'):
+            group = 3  # 高階級 D1-D2
+        elif tocfl_level.startswith('E'):
+            group = 4  # 流利級 E1-E2
+        else:
+            group = 5  # 未分級
+
         nodes.append({
             'id': i,
             'chinese': word.get('chinese', 'N/A'),
@@ -21,8 +36,8 @@ def generate_chinese_graph_html(words_data, url):
             'definition': word.get('definition', 'N/A'),
             'example_chinese': word.get('example_chinese', 'N/A'),
             'example_english': word.get('example_english', 'N/A'),
-            'tocfl_level': word.get('tocfl_level', '未分級'),
-            'group': i % 5  # 用於顏色分組
+            'tocfl_level': tocfl_level,
+            'group': group
         })
 
     # 創建隨機連接
@@ -149,6 +164,36 @@ def generate_chinese_graph_html(words_data, url):
             animation: slideIn 0.3s ease;
             border: 2px solid #4ecdc4;
         }}
+        .legend {{
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            z-index: 100;
+            border: 2px solid rgba(255,255,255,0.3);
+        }}
+        .legend-title {{
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #ffeb3b;
+        }}
+        .legend-item {{
+            display: flex;
+            align-items: center;
+            margin: 6px 0;
+        }}
+        .legend-color {{
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid white;
+        }}
         @keyframes slideIn {{
             from {{
                 transform: translateX(400px);
@@ -184,6 +229,34 @@ def generate_chinese_graph_html(words_data, url):
             <button onclick="restartSimulation()">重新排列</button>
             <button onclick="centerGraph()">居中顯示</button>
         </div>
+
+        <div class="legend">
+            <div class="legend-title">📊 TOCFL 級數圖例</div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #4CAF50;"></div>
+                <span>A級 - 入門 (A1-A2)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #2196F3;"></div>
+                <span>B級 - 基礎 (B1-B2)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FF9800;"></div>
+                <span>C級 - 進階 (C1-C2)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #F44336;"></div>
+                <span>D級 - 高階 (D1-D2)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9C27B0;"></div>
+                <span>E級 - 流利 (E1-E2)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9E9E9E;"></div>
+                <span>未分級</span>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -209,10 +282,17 @@ def generate_chinese_graph_html(words_data, url):
 
         svg.call(zoom);
 
-        // 顏色比例尺
+        // 顏色比例尺 - 根據 TOCFL 級數
         const color = d3.scaleOrdinal()
-            .domain([0, 1, 2, 3, 4])
-            .range(['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']);
+            .domain([0, 1, 2, 3, 4, 5])
+            .range([
+                '#4CAF50',  // A級 - 綠色（入門）
+                '#2196F3',  // B級 - 藍色（基礎）
+                '#FF9800',  // C級 - 橙色（進階）
+                '#F44336',  // D級 - 紅色（高階）
+                '#9C27B0',  // E級 - 紫色（流利）
+                '#9E9E9E'   // 未分級 - 灰色
+            ]);
 
         // 力模擬
         const simulation = d3.forceSimulation(nodes)
