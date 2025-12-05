@@ -292,6 +292,8 @@ def generate_chinese_graph_html(words_data, url):
 
         // 收藏單字功能
         function saveWord(wordData) {{
+            console.log('[收藏] 開始收藏詞彙:', wordData);
+
             fetch('/chinese/save-word', {{
                 method: 'POST',
                 headers: {{
@@ -299,9 +301,21 @@ def generate_chinese_graph_html(words_data, url):
                 }},
                 body: JSON.stringify({{ word: wordData }})
             }})
-            .then(response => response.json())
+            .then(response => {{
+                console.log('[收藏] HTTP 狀態:', response.status);
+                if (!response.ok) {{
+                    if (response.status === 401) {{
+                        throw new Error('未登入，請先登入');
+                    }}
+                    throw new Error('HTTP ' + response.status);
+                }}
+                return response.json();
+            }})
             .then(data => {{
-                if (data.exists) {{
+                console.log('[收藏] 後端回應:', data);
+                if (data.error) {{
+                    showNotification('❌ ' + data.error, false);
+                }} else if (data.exists) {{
                     showNotification('⚠️ 單字已在收藏中', false);
                 }} else {{
                     showNotification('✅ 單字已收藏！');
@@ -309,8 +323,8 @@ def generate_chinese_graph_html(words_data, url):
                 }}
             }})
             .catch(error => {{
-                console.error('Error:', error);
-                showNotification('❌ 收藏失敗', false);
+                console.error('[收藏] 錯誤:', error);
+                showNotification('❌ 收藏失敗: ' + error.message, false);
             }});
         }}
 
@@ -369,9 +383,13 @@ def generate_chinese_graph_html(words_data, url):
             event.stopPropagation();
             saveWord({{
                 chinese: d.chinese,
-                pinyin: d.pinyin,
+                english: d.pinyin || '',  // 暫時用拼音當 English（可後續改進）
                 definition: d.definition,
-                example: d.example
+                example_chinese: d.example || '',
+                example_english: d.example || '',
+                level: d.tocfl_level || '未分級',
+                level_category: d.tocfl_level || '未分級',
+                level_number: d.tocfl_level || ''
             }});
         }});
 
