@@ -476,7 +476,12 @@ def save_korean_word():
         return jsonify({'error': 'Unauthorized'}), 401
 
     user_id = session.get('user_id', session['username'])
-    word_data = request.json
+
+    # 前端發送的數據格式是 { word: {...} }
+    request_data = request.json
+    word_data = request_data.get('word', request_data)  # 兼容兩種格式
+
+    print(f"[韓文收藏] 用戶: {user_id}, 單字: {word_data.get('korean')}")
 
     result = add_korean_word(user_id, word_data)
     return jsonify(result)
@@ -794,7 +799,12 @@ def save_chinese_word():
         return jsonify({'error': 'Unauthorized'}), 401
 
     user_id = session.get('user_id', session['username'])
-    word_data = request.json
+
+    # 前端發送的數據格式是 { word: {...} }
+    request_data = request.json
+    word_data = request_data.get('word', request_data)  # 兼容兩種格式
+
+    print(f"[中文收藏] 用戶: {user_id}, 詞彙: {word_data.get('chinese')}")
 
     result = add_chinese_word(user_id, word_data)
     return jsonify(result)
