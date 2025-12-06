@@ -49,7 +49,7 @@ def generate_graph_html(words_data, url):
             font-family: 'Malgun Gothic', Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
             color: white;
         }}
         .header {{
