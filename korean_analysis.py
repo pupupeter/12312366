@@ -115,6 +115,7 @@ def generate_graph_html(words_data, url):
             background: rgba(0,0,0,0.7);
             padding: 10px;
             border-radius: 5px;
+            z-index: 200;
         }}
         .controls button {{
             margin: 2px;
@@ -127,6 +128,80 @@ def generate_graph_html(words_data, url):
         }}
         .controls button:hover {{
             background: #1976D2;
+        }}
+        .help-modal {{
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            z-index: 10001;
+            border: 2px solid #4ecdc4;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }}
+        .help-modal.show {{
+            display: block;
+        }}
+        .help-modal h2 {{
+            color: #ffeb3b;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }}
+        .help-modal h3 {{
+            color: #4ecdc4;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }}
+        .help-modal ul {{
+            list-style: none;
+            padding: 0;
+        }}
+        .help-modal li {{
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }}
+        .help-modal li:before {{
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #4ecdc4;
+        }}
+        .help-modal .close-btn {{
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }}
+        .help-modal .close-btn:hover {{
+            background: #d32f2f;
+        }}
+        .modal-overlay {{
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+        }}
+        .modal-overlay.show {{
+            display: block;
         }}
         .back-button {{
             position: absolute;
@@ -166,6 +241,43 @@ def generate_graph_html(words_data, url):
     </style>
 </head>
 <body>
+    <!-- 使用說明彈窗遮罩 -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeHelpModal()"></div>
+
+    <!-- 使用說明彈窗 -->
+    <div class="help-modal" id="helpModal">
+        <button class="close-btn" onclick="closeHelpModal()">✕ 關閉</button>
+        <h2>📖 知識圖譜使用說明</h2>
+
+        <h3>🖱️ 滑鼠操作</h3>
+        <ul>
+            <li><strong>滑過節點：</strong>查看單字詳細資訊，包含中文翻譯、定義和例句</li>
+            <li><strong>雙擊節點：</strong>將單字加入收藏清單</li>
+            <li><strong>拖曳節點：</strong>移動節點來重新排列圖譜</li>
+            <li><strong>滾輪：</strong>放大或縮小圖譜</li>
+            <li><strong>拖曳背景：</strong>平移瀏覽整個圖譜</li>
+        </ul>
+
+        <h3>🎨 顏色說明</h3>
+        <ul>
+            <li>節點使用不同顏色進行分組</li>
+            <li>相同顏色的節點屬於同一組</li>
+            <li>方便視覺化區分不同類型的單字</li>
+        </ul>
+
+        <h3>🎯 控制按鈕</h3>
+        <ul>
+            <li><strong>重新排列：</strong>重新計算節點位置，產生新的排列方式</li>
+            <li><strong>居中顯示：</strong>重置縮放並將圖譜置中顯示</li>
+        </ul>
+
+        <h3>⭐ 收藏單字</h3>
+        <ul>
+            <li>已收藏的單字會顯示 <strong>⭐ 星號圖示</strong></li>
+            <li>點擊上方「📚 我的收藏」按鈕查看所有收藏</li>
+        </ul>
+    </div>
+
     <div class="back-button">
         <a href="/korean">← 返回首頁</a>
         <a href="/korean/review" style="margin-left: 10px;">📚 我的收藏</a>
@@ -187,6 +299,7 @@ def generate_graph_html(words_data, url):
         <div class="controls">
             <button onclick="restartSimulation()">重新排列</button>
             <button onclick="centerGraph()">居中顯示</button>
+            <button onclick="openHelpModal()" style="background: #4CAF50;">❓ 使用說明</button>
         </div>
     </div>
 
@@ -429,6 +542,17 @@ def generate_graph_html(words_data, url):
         function centerGraph() {{
             const transform = d3.zoomIdentity.translate(width / 2, height / 2).scale(1);
             svg.transition().duration(750).call(zoom.transform, transform);
+        }}
+
+        // 使用說明彈窗控制
+        function openHelpModal() {{
+            document.getElementById('helpModal').classList.add('show');
+            document.getElementById('modalOverlay').classList.add('show');
+        }}
+
+        function closeHelpModal() {{
+            document.getElementById('helpModal').classList.remove('show');
+            document.getElementById('modalOverlay').classList.remove('show');
         }}
     </script>
 </body>

@@ -130,6 +130,7 @@ def generate_chinese_graph_html(words_data, url):
             background: rgba(0,0,0,0.7);
             padding: 10px;
             border-radius: 5px;
+            z-index: 200;
         }}
         .controls button {{
             margin: 2px;
@@ -142,6 +143,80 @@ def generate_chinese_graph_html(words_data, url):
         }}
         .controls button:hover {{
             background: #1976D2;
+        }}
+        .help-modal {{
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            z-index: 10001;
+            border: 2px solid #4ecdc4;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }}
+        .help-modal.show {{
+            display: block;
+        }}
+        .help-modal h2 {{
+            color: #ffeb3b;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }}
+        .help-modal h3 {{
+            color: #4ecdc4;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }}
+        .help-modal ul {{
+            list-style: none;
+            padding: 0;
+        }}
+        .help-modal li {{
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }}
+        .help-modal li:before {{
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #4ecdc4;
+        }}
+        .help-modal .close-btn {{
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }}
+        .help-modal .close-btn:hover {{
+            background: #d32f2f;
+        }}
+        .modal-overlay {{
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+        }}
+        .modal-overlay.show {{
+            display: block;
         }}
         .back-button {{
             position: absolute;
@@ -211,6 +286,44 @@ def generate_chinese_graph_html(words_data, url):
     </style>
 </head>
 <body>
+    <!-- 使用說明彈窗遮罩 -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeHelpModal()"></div>
+
+    <!-- 使用說明彈窗 -->
+    <div class="help-modal" id="helpModal">
+        <button class="close-btn" onclick="closeHelpModal()">✕ Close</button>
+        <h2>📖 How to Use the Knowledge Graph</h2>
+
+        <h3>🖱️ Mouse Interactions</h3>
+        <ul>
+            <li><strong>Hover over a node:</strong> View word details including English translation, definition, and examples</li>
+            <li><strong>Double-click a node:</strong> Save the word to your collection</li>
+            <li><strong>Drag a node:</strong> Move nodes to reorganize the graph</li>
+            <li><strong>Scroll wheel:</strong> Zoom in/out of the graph</li>
+            <li><strong>Click and drag background:</strong> Pan around the graph</li>
+        </ul>
+
+        <h3>🎨 Color Legend</h3>
+        <ul>
+            <li><strong>Green (Level 1-2):</strong> Basic vocabulary (基礎)</li>
+            <li><strong>Yellow-Orange (Level 3-4):</strong> Intermediate vocabulary (進階)</li>
+            <li><strong>Red-Pink (Level 5-7):</strong> Advanced vocabulary (精熟)</li>
+            <li><strong>Gray:</strong> Unclassified vocabulary</li>
+        </ul>
+
+        <h3>🎯 Control Buttons</h3>
+        <ul>
+            <li><strong>重新排列 (Rearrange):</strong> Reset node positions with new layout</li>
+            <li><strong>居中顯示 (Center View):</strong> Reset zoom and center the graph</li>
+        </ul>
+
+        <h3>⭐ Saved Words</h3>
+        <ul>
+            <li>Saved words are marked with a <strong>⭐ star icon</strong></li>
+            <li>Access your collection via "📚 我的收藏" button at the top</li>
+        </ul>
+    </div>
+
     <div class="back-button">
         <a href="/chinese">← 返回首頁</a>
         <a href="/chinese/review" style="margin-left: 10px;">📚 我的收藏</a>
@@ -232,6 +345,7 @@ def generate_chinese_graph_html(words_data, url):
         <div class="controls">
             <button onclick="restartSimulation()">重新排列</button>
             <button onclick="centerGraph()">居中顯示</button>
+            <button onclick="openHelpModal()" style="background: #4CAF50;">❓ Help</button>
         </div>
 
         <div class="legend">
@@ -528,6 +642,17 @@ def generate_chinese_graph_html(words_data, url):
         function centerGraph() {{
             const transform = d3.zoomIdentity.translate(width / 2, height / 2).scale(1);
             svg.transition().duration(750).call(zoom.transform, transform);
+        }}
+
+        // 使用說明彈窗控制
+        function openHelpModal() {{
+            document.getElementById('helpModal').classList.add('show');
+            document.getElementById('modalOverlay').classList.add('show');
+        }}
+
+        function closeHelpModal() {{
+            document.getElementById('helpModal').classList.remove('show');
+            document.getElementById('modalOverlay').classList.remove('show');
         }}
     </script>
 </body>
