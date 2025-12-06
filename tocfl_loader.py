@@ -42,24 +42,14 @@ class TOCFLVocab:
         return self.vocab_dict.get(word, None)
 
     def get_level_display(self, word):
-        """獲取詞彙的級數顯示（例如：A1, B2, C1）"""
+        """獲取詞彙的級數顯示（例如：基礎 第1級）"""
         info = self.get_word_info(word)
         if info:
             level = info['level']
             grade = info['grade']
 
-            # 轉換為簡潔格式
-            level_map = {
-                '基礎': 'A',
-                '進階': 'B',
-                '高階': 'C',
-                '流利': 'D',
-                '精通': 'E'
-            }
-            level_short = level_map.get(level, level)
-            grade_num = grade.replace('第', '').replace('級', '')
-
-            return f"{level_short}{grade_num}"
+            # 直接返回 CSV 原始格式：「基礎 第1級」
+            return f"{level} {grade}"
         return None
 
 

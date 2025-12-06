@@ -464,14 +464,18 @@ def generate_chinese_graph_html(words_data, url):
         .on("dblclick", function(event, d) {{
             event.stopPropagation();
 
-            // 解析 TOCFL 級數（例如 "A1" -> level_category: "A", level_number: "1"）
+            // 解析 TOCFL 級數（例如 "基礎 第1級" -> level_category: "基礎", level_number: "1"）
             const tocflLevel = d.tocfl_level || '未分級';
-            let levelCategory = tocflLevel;
+            let levelCategory = '未分級';
             let levelNumber = '';
 
-            if (tocflLevel !== '未分級' && tocflLevel.length >= 2) {{
-                levelCategory = tocflLevel.charAt(0);  // 取第一個字母 (A, B, C, D, E)
-                levelNumber = tocflLevel.substring(1);  // 取後面的數字 (1, 2, 3, 4, 5)
+            if (tocflLevel !== '未分級') {{
+                // 分割「基礎 第1級」格式
+                const parts = tocflLevel.split(' ');
+                if (parts.length >= 2) {{
+                    levelCategory = parts[0];  // 基礎/進階/精熟
+                    levelNumber = parts[1].replace('第', '').replace('級', '').replace('*', '');  // 1/2/3/4/5/6/7
+                }}
             }}
 
             saveWord({{
