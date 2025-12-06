@@ -15,15 +15,23 @@ def generate_chinese_graph_html(words_data, url):
     # 創建節點
     for i, word in enumerate(words_data):
         tocfl_level = word.get('tocfl_level', '未分級')
-        # 根據 TOCFL 級數分組（用於顏色）- 使用 CSV 的分級方式
-        if '基礎' in tocfl_level:
-            group = 0  # 基礎
-        elif '進階' in tocfl_level:
-            group = 1  # 進階
-        elif '精熟' in tocfl_level:
-            group = 2  # 精熟
+        # 根據 TOCFL 級數分組（用於顏色）- 使用「第1級」「第2級」等
+        if '第1' in tocfl_level:
+            group = 0  # 第1級
+        elif '第2' in tocfl_level:
+            group = 1  # 第2級
+        elif '第3' in tocfl_level:
+            group = 2  # 第3級
+        elif '第4' in tocfl_level:
+            group = 3  # 第4級
+        elif '第5' in tocfl_level:
+            group = 4  # 第5級
+        elif '第6' in tocfl_level:
+            group = 5  # 第6級
+        elif '第7' in tocfl_level:
+            group = 6  # 第7級
         else:
-            group = 3  # 未分級
+            group = 7  # 未分級
 
         nodes.append({
             'id': i,
@@ -230,15 +238,31 @@ def generate_chinese_graph_html(words_data, url):
             <div class="legend-title">📊 TOCFL 級數圖例</div>
             <div class="legend-item">
                 <div class="legend-color" style="background-color: #4CAF50;"></div>
-                <span>基礎</span>
+                <span>第1級</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #8BC34A;"></div>
+                <span>第2級</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FFC107;"></div>
+                <span>第3級</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background-color: #FF9800;"></div>
-                <span>進階</span>
+                <span>第4級</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FF5722;"></div>
+                <span>第5級</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background-color: #F44336;"></div>
-                <span>精熟</span>
+                <span>第6級</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #E91E63;"></div>
+                <span>第7級</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background-color: #9E9E9E;"></div>
@@ -270,13 +294,17 @@ def generate_chinese_graph_html(words_data, url):
 
         svg.call(zoom);
 
-        // 顏色比例尺 - 根據 TOCFL CSV 分級
+        // 顏色比例尺 - 根據 TOCFL 級數（第1級到第7級）
         const color = d3.scaleOrdinal()
-            .domain([0, 1, 2, 3])
+            .domain([0, 1, 2, 3, 4, 5, 6, 7])
             .range([
-                '#4CAF50',  // 基礎 - 綠色
-                '#FF9800',  // 進階 - 橙色
-                '#F44336',  // 精熟 - 紅色
+                '#4CAF50',  // 第1級 - 綠色
+                '#8BC34A',  // 第2級 - 淺綠
+                '#FFC107',  // 第3級 - 黃色
+                '#FF9800',  // 第4級 - 橙色
+                '#FF5722',  // 第5級 - 深橙
+                '#F44336',  // 第6級 - 紅色
+                '#E91E63',  // 第7級 - 粉紅
                 '#9E9E9E'   // 未分級 - 灰色
             ]);
 
