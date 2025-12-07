@@ -1,5 +1,12 @@
 # 🌏 多語言學習平台 (Multilingual Learning Platform)
 
+> **Language / 語言:** [繁體中文](#繁體中文) | [English](#english)
+
+---
+
+<a name="繁體中文"></a>
+## 繁體中文版
+
 一個整合 AI 技術的多語言學習平台，支援中文和韓文詞彙學習，提供互動式知識圖譜、單字收藏、學習遊戲等功能。
 
 ## ✨ 主要功能
@@ -61,9 +68,6 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # Gemini API
 GEMINI_API_KEY=your_gemini_api_key
-
-# Flask 密鑰
-SECRET_KEY=your_secret_key_here
 ```
 
 4. **設定 Supabase 資料庫**
@@ -194,7 +198,6 @@ Railway 提供免費額度，適合快速部署。
    SUPABASE_URL=your_supabase_url
    SUPABASE_ANON_KEY=your_supabase_anon_key
    GEMINI_API_KEY=your_gemini_api_key
-   SECRET_KEY=your_secret_key
    PORT=8080
    ```
 
@@ -249,7 +252,6 @@ Vercel 也可以部署 Python Flask 應用。
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
    - `GEMINI_API_KEY`
-   - `SECRET_KEY`
 
 ### 本地開發
 
@@ -319,7 +321,6 @@ python railway_app.py
 | `SUPABASE_URL` | Supabase 專案 URL | ✅ |
 | `SUPABASE_ANON_KEY` | Supabase 匿名金鑰 | ✅ |
 | `GEMINI_API_KEY` | Google Gemini API 金鑰 | ✅ |
-| `SECRET_KEY` | Flask session 密鑰 | ✅ |
 | `PORT` | 應用端口 (預設 8080) | ❌ |
 
 ---
@@ -347,12 +348,6 @@ A: 確認瀏覽器支援 D3.js，建議使用最新版 Chrome 或 Firefox。
 
 ---
 
-## 🤝 貢獻
-
-歡迎提交 Issue 和 Pull Request！
-
----
-
 ## 📄 授權
 
 MIT License
@@ -373,5 +368,367 @@ MIT License
 - [D3.js 文檔](https://d3js.org/)
 
 ---
+---
 
-**祝你學習愉快！📚✨**
+<a name="english"></a>
+## English Version
+
+An AI-powered multilingual learning platform supporting Chinese and Korean vocabulary learning with interactive knowledge graphs, word collections, learning games, and more.
+
+## ✨ Key Features
+
+### 📚 Chinese Learning
+- **Smart Vocabulary Analysis**: Uses AI (Gemini) to analyze web pages or plain text content, automatically extracting Chinese vocabulary
+- **TOCFL Level Tagging**: Automatically labels TOCFL (Test of Chinese as a Foreign Language) levels (Levels 1-7)
+- **Knowledge Graph Visualization**: Interactive D3.js graphs with color-coded difficulty levels
+- **English Translations & Definitions**: Each word includes English translation, English definition, and example sentences
+- **Word Collection System**: Double-click nodes to save words with level-based management
+
+### 🇰🇷 Korean Learning
+- **Korean News Analysis**: Analyzes Korean web content and extracts key vocabulary
+- **Chinese Translation Reference**: Provides Chinese translations and definitions for Korean words
+- **Knowledge Graph Visualization**: Interactive node graphs for exploring vocabulary relationships
+- **Example Sentence Learning**: Korean example sentences with Chinese translations
+
+### 🎮 Learning Games
+- **Word Matching Game**: Memory-testing card matching
+- **Typing Practice Game**: Spelling ability training
+- **Listening Practice**: TTS voice generation for listening comprehension training
+
+### 👤 User System
+- **Account Registration/Login**: User data management via Supabase
+- **Personalized Collections**: Independent word collection library for each user
+- **Multilingual Interface**: Supports Traditional Chinese, Simplified Chinese, English, and Korean
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.9+
+- Node.js (optional, for frontend development)
+- Supabase account
+- Google Gemini API Key
+
+### Local Installation
+
+1. **Clone the project**
+```bash
+git clone https://github.com/pupupeter/12312366.git
+cd 12312366
+```
+
+2. **Install dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+3. **Configure environment variables**
+
+Create a `.env` file:
+```env
+# Supabase Configuration
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Gemini API
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+4. **Set up Supabase database**
+
+Execute the following SQL in Supabase SQL Editor to create tables:
+
+```sql
+-- Users table
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    email TEXT UNIQUE,
+    language TEXT DEFAULT 'zh-TW',
+    created_at TIMESTAMP DEFAULT NOW(),
+    last_login TIMESTAMP
+);
+
+-- Chinese words collection table
+CREATE TABLE chinese_words (
+    id BIGSERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    chinese TEXT NOT NULL,
+    english TEXT,
+    definition TEXT,
+    example_chinese TEXT,
+    example_english TEXT,
+    level TEXT,
+    level_category TEXT,
+    level_number TEXT,
+    saved_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Korean words collection table
+CREATE TABLE korean_words (
+    id BIGSERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    korean TEXT NOT NULL,
+    chinese TEXT,
+    definition TEXT,
+    example_korean TEXT,
+    example_chinese TEXT,
+    saved_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+5. **Start the application**
+```bash
+python railway_app.py
+```
+
+The application will start at `http://localhost:8080`
+
+---
+
+## 📖 How to Use
+
+### Chinese Vocabulary Analysis
+
+1. After logging in, click "Chinese Vocabulary Learning"
+2. Enter a URL or paste plain text
+3. Click "Start Analysis"
+4. Wait for AI analysis to complete, then the knowledge graph will open automatically
+
+**Knowledge Graph Operations:**
+- **Hover over nodes**: View detailed word information (English translation, definition, example sentences)
+- **Double-click nodes**: Save words to your personal list
+- **Drag nodes**: Rearrange the graph
+- **Scroll wheel zoom**: Zoom in/out of the graph
+- **Click "❓ Help"**: View complete usage instructions
+
+**TOCFL Level Colors:**
+- 🟢 Green: Level 1-2 (Basic)
+- 🟡 Yellow: Level 3 (Intermediate)
+- 🟠 Orange: Level 4-5 (Intermediate-Advanced)
+- 🔴 Red: Level 6-7 (Advanced)
+- ⚫ Gray: Ungraded
+
+### Korean Vocabulary Analysis
+
+1. After logging in, click "Korean Vocabulary Learning"
+2. Enter a Korean webpage URL
+3. Click "Start Analysis"
+4. View the knowledge graph and save words
+
+**Knowledge Graph Operations:**
+- **Hover over nodes**: View Chinese translations and example sentences for Korean words
+- **Double-click nodes**: Save words
+- **Click "❓ 使用說明"**: View Chinese operation guide
+
+### Learning Games
+
+1. Click "Word Learning Games"
+2. Choose game type:
+   - **Matching Game**: Flip cards to match words with translations
+   - **Typing Game**: Enter correct words based on prompts
+3. Game content comes from your saved words
+
+### Manage Collections
+
+- Click "📚 My Collections" to view all saved words
+- Filter by language and level
+- Delete unwanted words
+- Export as CSV file for external use
+
+---
+
+## 🛠️ Deployment Methods
+
+### Railway Deployment (Recommended)
+
+Railway offers free tier quota, suitable for quick deployment.
+
+1. **Preparation**
+   - Register a [Railway](https://railway.app/) account
+   - Fork this project to your GitHub
+
+2. **Create new project**
+   - Log in to Railway
+   - Click "New Project"
+   - Select "Deploy from GitHub repo"
+   - Choose your forked project
+
+3. **Configure environment variables**
+
+   Add in Railway project's Variables page:
+   ```
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   GEMINI_API_KEY=your_gemini_api_key
+   PORT=8080
+   ```
+
+4. **Deployment configuration**
+
+   Railway will automatically detect the Python project and use the following settings:
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `python railway_app.py`
+
+5. **Complete deployment**
+   - Railway will automatically deploy and provide a public URL
+   - Example: `https://your-app.railway.app`
+
+6. **Auto deployment**
+   - Every push to GitHub main branch
+   - Railway will automatically redeploy
+
+### Vercel Deployment (Alternative)
+
+Vercel can also deploy Python Flask applications.
+
+1. **Prepare vercel.json**
+
+   Ensure `vercel.json` exists in project root:
+   ```json
+   {
+     "version": 2,
+     "builds": [
+       {
+         "src": "railway_app.py",
+         "use": "@vercel/python"
+       }
+     ],
+     "routes": [
+       {
+         "src": "/(.*)",
+         "dest": "railway_app.py"
+       }
+     ]
+   }
+   ```
+
+2. **Deploy to Vercel**
+   ```bash
+   npm i -g vercel
+   vercel
+   ```
+
+3. **Configure environment variables**
+
+   Add in Vercel Dashboard Settings → Environment Variables:
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `GEMINI_API_KEY`
+
+### Local Development
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env to fill in your configuration
+
+# Start development server
+python railway_app.py
+```
+
+Visit `http://localhost:8080`
+
+---
+
+## 📁 Project Structure
+
+```
+12312366/
+├── railway_app.py              # Main application (Flask)
+├── chinese_analysis.py         # Chinese graph generation
+├── korean_analysis.py          # Korean graph generation
+├── supabase_utils.py          # Supabase database operations
+├── tocfl_loader.py            # TOCFL vocabulary loader
+├── translations.py            # Multilingual translations
+├── templates/                 # HTML templates
+│   ├── dashboard.html         # Main dashboard
+│   ├── review22.html          # Collections page
+│   ├── games/                 # Game pages
+│   └── ...
+├── static/                    # Static resources
+├── 14452詞語表202504.csv      # TOCFL vocabulary list
+├── requirements.txt           # Python dependencies
+├── .env                       # Environment variables (not committed to Git)
+└── README.md                  # This file
+```
+
+---
+
+## 🔧 Tech Stack
+
+### Backend
+- **Flask**: Web framework
+- **Supabase**: Database (PostgreSQL)
+- **Google Gemini**: AI vocabulary analysis
+- **smolagents**: AI Agent framework
+
+### Frontend
+- **D3.js**: Knowledge graph visualization
+- **Bootstrap**: UI framework
+- **Jinja2**: Template engine
+
+### Deployment
+- **Railway**: Primary deployment platform
+- **Vercel**: Alternative deployment platform
+
+---
+
+## 🌐 Environment Variables
+
+| Variable Name | Description | Required |
+|--------------|-------------|----------|
+| `SUPABASE_URL` | Supabase project URL | ✅ |
+| `SUPABASE_ANON_KEY` | Supabase anonymous key | ✅ |
+| `GEMINI_API_KEY` | Google Gemini API key | ✅ |
+| `PORT` | Application port (default 8080) | ❌ |
+
+---
+
+## 📝 FAQ
+
+### Q: How to get Gemini API Key?
+A: Visit [Google AI Studio](https://makersuite.google.com/app/apikey) to apply for a free API Key.
+
+### Q: How to set up Supabase?
+A:
+1. Register at [Supabase](https://supabase.com/)
+2. Create a new project
+3. Find URL and anon key in Settings → API
+4. Execute table creation SQL in SQL Editor
+
+### Q: Can't log in after deployment?
+A: Verify Supabase environment variables are configured correctly and check if tables have been created.
+
+### Q: Chinese analysis not responding?
+A: Check if Gemini API Key is valid and if you have API quota.
+
+### Q: Graph displays blank?
+A: Verify browser supports D3.js; recommend using latest Chrome or Firefox.
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+## 👨‍💻 Developer
+
+Developed with assistance from Claude Code
+
+---
+
+## 🔗 Related Links
+
+- [Supabase Documentation](https://supabase.com/docs)
+- [Railway Documentation](https://docs.railway.app/)
+- [Google Gemini API](https://ai.google.dev/)
+- [D3.js Documentation](https://d3js.org/)
