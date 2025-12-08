@@ -427,7 +427,7 @@ Extract 10-15 important words. Korean text:
 """
 
         response = gemini_client.models.generate_content(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.5-flash",
             contents=prompt
         )
 
@@ -537,7 +537,7 @@ Extract 10-15 important words. Korean text:
 """
 
         response = gemini_client.models.generate_content(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.5-flash",
             contents=prompt
         )
 
@@ -820,7 +820,7 @@ Extract 10-15 important words. Chinese text:
 """
 
         response = gemini_client.models.generate_content(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.5-flash",
             contents=prompt
         )
 
@@ -947,7 +947,7 @@ Extract 10-15 important words. Chinese text:
 """
 
         response = gemini_client.models.generate_content(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.5-flash",
             contents=prompt
         )
 
