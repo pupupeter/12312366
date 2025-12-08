@@ -43,9 +43,14 @@ from supabase_utils import (
     delete_chinese_word
 )
 
-# Smolagents - 韓文和中文 AI Agent
-from smolagents import Tool, LiteLLMModel
-from smolagents.agents import ToolCallingAgent
+# Google GenAI - 直接使用 Google SDK (跟 TTS 一樣)
+try:
+    from google import genai
+    GENAI_AVAILABLE = True
+except ImportError:
+    GENAI_AVAILABLE = False
+    print("Warning: google-genai not installed")
+
 from markdownify import markdownify
 
 app = Flask(__name__)
@@ -65,233 +70,23 @@ processing_status = {}
 
 # ==================== AI Agent 初始化 ====================
 
-# 訪問網頁工具
-class VisitWebpageTool(Tool):
-    name = "visit_webpage"
-    description = "Fetches webpage content as Markdown."
-    inputs = {"url": {"type": "string", "description": "The URL to visit."}}
-    output_type = "string"
-
-    def forward(self, url: str) -> str:
-        try:
-            response = requests.get(url, timeout=20)
-            response.raise_for_status()
-            markdown_content = markdownify(response.text).strip()
-            markdown_content = re.sub(r"\n{3,}", "\n\n", markdown_content)
-            return markdown_content[:10000]  # 限制長度
-        except requests.exceptions.Timeout:
-            return "Request timed out. Try again later."
-        except requests.exceptions.RequestException as e:
-            return f"Error fetching the webpage: {str(e)}"
-
-# 韓文分詞翻譯工具
-class KoreanWordAnalysisTool(Tool):
-    name = "korean_word_analysis"
-    description = "Analyzes Korean text: tokenizes, translates, provides definitions and example sentences."
-    inputs = {"text": {"type": "string", "description": "Korean text to analyze."}}
-    output_type = "string"
-
-    def __init__(self, model, **kwargs):
-        super().__init__(**kwargs)
-        self.model = model
-
-    def forward(self, text: str) -> str:
-        prompt = f"""
-請對以下韓文新聞內容進行詳細分析：
-
-1. 首先進行分詞，找出所有重要的詞彙（名詞、動詞、形容詞等），忽略無關的標點符號和格式
-2. 只提取韓文詞彙，忽略英文、數字等
-3. 對每個詞彙提供以下資訊：
-   - 韓文原文
-   - 中文翻譯
-   - 中文定義/解釋
-   - 韓文例句（使用該詞彙的簡單例句）
-   - 例句的中文翻譯
-
-請以JSON格式輸出，結構如下：
-[
-  {{
-    "korean": "韓文詞彙",
-    "chinese": "中文翻譯",
-    "definition": "中文定義解釋",
-    "example_korean": "韓文例句",
-    "example_chinese": "例句中文翻譯"
-  }}
-]
-
-韓文新聞內容：
-{text}
-"""
-        messages = [{"role": "user", "content": prompt}]
-        response = self.model(messages)
-        return response.content if hasattr(response, 'content') else str(response)
-
-# 韓文新聞工具（保留原有的 Naver API 工具）
-class KoreanNewsTool(Tool):
-    name = "korean_news_tool"
-    description = """這個工具可以獲取最新的韓文新聞。
-    參數：
-    - query: 搜尋關鍵字（例如：'정치', '경제', 'BTS', '날씨'）
-    - count: 要返回的新聞數量（默認5篇）
-
-    返回格式：新聞標題、內容摘要、發布時間
-    """
-    inputs = {
-        "query": {"type": "string", "description": "搜尋的韓文關鍵字"},
-        "count": {"type": "integer", "description": "新聞數量", "default": 5}
-    }
-    output_type = "string"
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.naver_client_id = os.environ.get('NAVER_CLIENT_ID')
-        self.naver_client_secret = os.environ.get('NAVER_CLIENT_SECRET')
-
-    def forward(self, query: str, count: int = 5) -> str:
-        if not self.naver_client_id or not self.naver_client_secret:
-            return "錯誤：需要設置 NAVER_CLIENT_ID 和 NAVER_CLIENT_SECRET 環境變數"
-
-        try:
-            url = "https://openapi.naver.com/v1/search/news.json"
-            params = {
-                'query': query,
-                'display': count,
-                'sort': 'date'
-            }
-            headers = {
-                'X-Naver-Client-Id': self.naver_client_id,
-                'X-Naver-Client-Secret': self.naver_client_secret
-            }
-
-            response = requests.get(url, params=params, headers=headers)
-            response.raise_for_status()
-            data = response.json()
-
-            if 'items' not in data or not data['items']:
-                return f"找不到關於 '{query}' 的新聞"
-
-            news_list = []
-            for idx, item in enumerate(data['items'][:count], 1):
-                title = re.sub('<[^<]+?>', '', item['title'])
-                description = re.sub('<[^<]+?>', '', item['description'])
-                pub_date = item.get('pubDate', '未知日期')
-
-                news_list.append(f"{idx}. {title}\n   {description}\n   發布時間: {pub_date}\n")
-
-            return "\n".join(news_list)
-
-        except Exception as e:
-            return f"獲取新聞時出錯：{str(e)}"
-
-# 中文詞彙工具
-class ChineseVocabTool(Tool):
-    name = "chinese_vocab_tool"
-    description = """這個工具可以查詢中文詞彙的詳細解釋。
-    參數：
-    - word: 要查詢的中文詞彙
-
-    返回：詞彙的拼音、英文翻譯、例句、HSK等級等資訊
-    """
-    inputs = {
-        "word": {"type": "string", "description": "要查詢的中文詞彙"}
-    }
-    output_type = "string"
-
-    def forward(self, word: str) -> str:
-        try:
-            # 使用線上中文詞典 API
-            url = f"https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb={urllib.parse.quote(word)}"
-            headers = {'User-Agent': 'Mozilla/5.0'}
-
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-
-            # 簡單解析（實際應該用更複雜的解析）
-            if word in response.text:
-                return f"找到詞彙 '{word}' 的相關資訊。\n建議查看完整線上詞典以獲得詳細解釋。"
-            else:
-                return f"找不到詞彙 '{word}' 的資訊"
-
-        except Exception as e:
-            return f"查詢詞彙時出錯：{str(e)}"
-
-# 中文分詞翻譯工具
-class ChineseWordAnalysisTool(Tool):
-    name = "chinese_word_analysis"
-    description = "Analyzes Chinese text: tokenizes, provides pinyin, definitions and example sentences."
-    inputs = {"text": {"type": "string", "description": "Chinese text to analyze."}}
-    output_type = "string"
-
-    def __init__(self, model, **kwargs):
-        super().__init__(**kwargs)
-        self.model = model
-
-    def forward(self, text: str) -> str:
-        prompt = f"""
-Analyze the following Chinese text and extract vocabulary words.
-
-CRITICAL REQUIREMENTS:
-1. Extract important Chinese words (nouns, verbs, adjectives, etc.)
-2. For EACH word provide:
-   - chinese: The Chinese word
-   - english: English translation (MUST BE ENGLISH, NOT CHINESE!)
-   - definition: English definition (MUST BE ENGLISH, NOT CHINESE!)
-   - example_chinese: Chinese example sentence
-   - example_english: English translation of example (MUST BE ENGLISH, NOT CHINESE!)
-
-IMPORTANT: "english", "definition", and "example_english" MUST be in English language ONLY.
-
-JSON format:
-[
-  {{
-    "chinese": "學習",
-    "english": "learn, study",
-    "definition": "to acquire knowledge or skills through study or practice",
-    "example_chinese": "我每天學習中文。",
-    "example_english": "I study Chinese every day."
-  }}
-]
-
-Chinese text:
-{text}
-"""
-        messages = [{"role": "user", "content": prompt}]
-        response = self.model(messages)
-        return response.content if hasattr(response, 'content') else str(response)
-
-# 初始化 AI 模型和 Agent
+# 初始化 Gemini Client (使用跟 TTS 一樣的方式，直接用 google.genai SDK)
+gemini_client = None
 try:
     gemini_api_key = os.environ.get('GEMINI_API_KEY')
     if not gemini_api_key:
         raise ValueError("需要 GEMINI_API_KEY 環境變數")
 
-    # 韓文 Agent
-    korean_model = LiteLLMModel(
-        model_id="gemini/gemini-2.0-flash-exp",
-        api_key=gemini_api_key
-    )
-    korean_agent = ToolCallingAgent(
-        tools=[KoreanNewsTool()],
-        model=korean_model,
-        max_steps=3
-    )
-
-    # 中文 Agent
-    chinese_model = LiteLLMModel(
-        model_id="gemini/gemini-2.0-flash-exp",
-        api_key=gemini_api_key
-    )
-    chinese_agent = ToolCallingAgent(
-        tools=[ChineseVocabTool()],
-        model=chinese_model,
-        max_steps=3
-    )
-
-    print("✓ AI Agents 初始化成功")
-    AGENTS_AVAILABLE = True
+    if GENAI_AVAILABLE:
+        gemini_client = genai.Client(api_key=gemini_api_key)
+        print("✓ Gemini Client 初始化成功 (使用 google.genai SDK)")
+        AGENTS_AVAILABLE = True
+    else:
+        print("✗ google-genai SDK 未安裝")
+        AGENTS_AVAILABLE = False
 
 except Exception as e:
-    print(f"✗ AI Agents 初始化失敗: {e}")
+    print(f"✗ Gemini Client 初始化失敗: {e}")
     AGENTS_AVAILABLE = False
     korean_agent = None
     chinese_agent = None
@@ -589,30 +384,59 @@ def korean_result(filename):
         return jsonify({'error': '文件未找到'}), 404
 
 def process_text_analysis(text, process_id):
-    """處理純文字輸入的韓文分析"""
+    """處理純文字輸入的韓文分析 (使用 google.genai SDK)"""
     try:
-        processing_status[process_id] = {
-            'status': 'processing',
-            'message': '正在初始化AI模型...',
-            'progress': 10
-        }
-
-        model = LiteLLMModel(model_id="gemini/gemini-2.0-flash", token=os.getenv("GEMINI_API_KEY"))
-        korean_tool = KoreanWordAnalysisTool(model=model)
+        if not gemini_client:
+            processing_status[process_id] = {
+                'status': 'error',
+                'message': 'Gemini Client 未初始化'
+            }
+            return
 
         processing_status[process_id] = {
             'status': 'processing',
             'message': '正在進行韓文詞彙分析...',
-            'progress': 40
+            'progress': 20
         }
 
         content = text[:10000]
-        words_json_str = korean_tool.forward(content)
+
+        # 使用 Gemini API 分析（跟 TTS 一樣）
+        prompt = f"""Analyze the following Korean text and extract important vocabulary words.
+
+For each word, provide:
+- korean: The Korean word
+- chinese: Chinese translation
+- definition: Chinese definition/explanation
+- example_korean: Korean example sentence using this word
+- example_chinese: Chinese translation of the example
+
+Return ONLY a JSON array (no markdown, no explanation) in this exact format:
+[
+  {{
+    "korean": "단어",
+    "chinese": "單詞",
+    "definition": "詞彙的意思",
+    "example_korean": "이것은 예문입니다.",
+    "example_chinese": "這是例句。"
+  }}
+]
+
+Extract 10-15 important words. Korean text:
+{content}
+"""
+
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash-exp",
+            contents=prompt
+        )
+
+        words_json_str = response.text.strip()
 
         processing_status[process_id] = {
             'status': 'processing',
             'message': '正在解析分析結果...',
-            'progress': 70
+            'progress': 60
         }
 
         # 解析JSON
@@ -654,48 +478,81 @@ def process_text_analysis(text, process_id):
         }
 
 def process_korean_url_analysis(url, process_id):
-    """處理URL輸入的韓文分析"""
+    """處理URL輸入的韓文分析 (使用 google.genai SDK)"""
     try:
-        processing_status[process_id] = {
-            'status': 'processing',
-            'message': '正在初始化AI模型...',
-            'progress': 10
-        }
-
-        model = LiteLLMModel(model_id="gemini/gemini-2.0-flash", token=os.getenv("GEMINI_API_KEY"))
-        visit_tool = VisitWebpageTool()
-        korean_tool = KoreanWordAnalysisTool(model=model)
+        if not gemini_client:
+            processing_status[process_id] = {
+                'status': 'error',
+                'message': 'Gemini Client 未初始化'
+            }
+            return
 
         processing_status[process_id] = {
             'status': 'processing',
             'message': '正在抓取網頁內容...',
-            'progress': 30
+            'progress': 10
         }
 
-        content = visit_tool.forward(url)
-        if content.startswith("Request timed out") or content.startswith("Error"):
+        # 抓取網頁內容
+        try:
+            response = requests.get(url, timeout=20)
+            response.raise_for_status()
+            content = markdownify(response.text).strip()[:10000]
+        except Exception as e:
             processing_status[process_id] = {
                 'status': 'error',
-                'message': f'抓取網頁失敗: {content}'
+                'message': f'抓取網頁失敗: {str(e)}'
             }
             return
 
         processing_status[process_id] = {
             'status': 'processing',
             'message': '正在進行韓文詞彙分析...',
-            'progress': 60
+            'progress': 40
         }
 
-        words_json_str = korean_tool.forward(content)
+        # 使用 Gemini API 分析（跟 TTS 一樣）
+        prompt = f"""Analyze the following Korean text and extract important vocabulary words.
+
+For each word, provide:
+- korean: The Korean word
+- chinese: Chinese translation
+- definition: Chinese definition/explanation
+- example_korean: Korean example sentence using this word
+- example_chinese: Chinese translation of the example
+
+Return ONLY a JSON array (no markdown, no explanation) in this exact format:
+[
+  {{
+    "korean": "단어",
+    "chinese": "單詞",
+    "definition": "詞彙的意思",
+    "example_korean": "이것은 예문입니다.",
+    "example_chinese": "這是例句。"
+  }}
+]
+
+Extract 10-15 important words. Korean text:
+{content}
+"""
+
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash-exp",
+            contents=prompt
+        )
+
+        words_json_str = response.text.strip()
 
         processing_status[process_id] = {
             'status': 'processing',
             'message': '正在解析分析結果...',
-            'progress': 80
+            'progress': 70
         }
 
         # 解析JSON
         cleaned_json = words_json_str.strip()
+        # 移除可能的 markdown 代碼塊標記
+        cleaned_json = cleaned_json.replace('```json', '').replace('```', '')
         start_idx = cleaned_json.find('[')
         end_idx = cleaned_json.rfind(']')
 
@@ -916,25 +773,58 @@ def chinese_result(filename):
         return jsonify({'error': '文件未找到'}), 404
 
 def process_chinese_text_analysis(text, process_id):
-    """處理純文字輸入的中文分析"""
+    """處理純文字輸入的中文分析 (使用 google.genai SDK)"""
     try:
-        processing_status[process_id] = {
-            'status': 'processing',
-            'message': '正在初始化AI模型...',
-            'progress': 10
-        }
-
-        model = LiteLLMModel(model_id="gemini/gemini-2.0-flash", token=os.getenv("GEMINI_API_KEY"))
-        chinese_tool = ChineseWordAnalysisTool(model=model)
+        if not gemini_client:
+            processing_status[process_id] = {
+                'status': 'error',
+                'message': 'Gemini Client 未初始化'
+            }
+            return
 
         processing_status[process_id] = {
             'status': 'processing',
             'message': '正在進行中文詞彙分析...',
-            'progress': 40
+            'progress': 20
         }
 
         content = text[:10000]
-        words_json_str = chinese_tool.forward(content)
+
+        # 使用 Gemini API 分析
+        prompt = f"""Analyze the following Chinese text and extract vocabulary words.
+
+CRITICAL REQUIREMENTS:
+1. Extract important Chinese words (nouns, verbs, adjectives, etc.)
+2. For EACH word provide:
+   - chinese: The Chinese word
+   - english: English translation (MUST BE ENGLISH, NOT CHINESE!)
+   - definition: English definition (MUST BE ENGLISH, NOT CHINESE!)
+   - example_chinese: Chinese example sentence
+   - example_english: English translation of example (MUST BE ENGLISH!)
+
+IMPORTANT: "english", "definition", and "example_english" MUST be in English language ONLY.
+
+Return ONLY a JSON array (no markdown, no explanation):
+[
+  {{
+    "chinese": "詞彙",
+    "english": "vocabulary",
+    "definition": "a body of words used in a particular language",
+    "example_chinese": "我在學習新的詞彙。",
+    "example_english": "I am learning new vocabulary."
+  }}
+]
+
+Extract 10-15 important words. Chinese text:
+{content}
+"""
+
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash-exp",
+            contents=prompt
+        )
+
+        words_json_str = response.text.strip()
 
         processing_status[process_id] = {
             'status': 'processing',
@@ -994,48 +884,84 @@ def process_chinese_text_analysis(text, process_id):
         }
 
 def process_chinese_url_analysis(url, process_id):
-    """處理URL輸入的中文分析"""
+    """處理URL輸入的中文分析 (使用 google.genai SDK)"""
     try:
-        processing_status[process_id] = {
-            'status': 'processing',
-            'message': '正在初始化AI模型...',
-            'progress': 10
-        }
-
-        model = LiteLLMModel(model_id="gemini/gemini-2.0-flash", token=os.getenv("GEMINI_API_KEY"))
-        visit_tool = VisitWebpageTool()
-        chinese_tool = ChineseWordAnalysisTool(model=model)
+        if not gemini_client:
+            processing_status[process_id] = {
+                'status': 'error',
+                'message': 'Gemini Client 未初始化'
+            }
+            return
 
         processing_status[process_id] = {
             'status': 'processing',
             'message': '正在抓取網頁內容...',
-            'progress': 30
+            'progress': 10
         }
 
-        content = visit_tool.forward(url)
-        if content.startswith("Request timed out") or content.startswith("Error"):
+        # 抓取網頁內容
+        try:
+            response = requests.get(url, timeout=20)
+            response.raise_for_status()
+            content = markdownify(response.text).strip()[:10000]
+        except Exception as e:
             processing_status[process_id] = {
                 'status': 'error',
-                'message': f'抓取網頁失敗: {content}'
+                'message': f'抓取網頁失敗: {str(e)}'
             }
             return
 
         processing_status[process_id] = {
             'status': 'processing',
             'message': '正在進行中文詞彙分析...',
-            'progress': 60
+            'progress': 40
         }
 
-        words_json_str = chinese_tool.forward(content)
+        # 使用 Gemini API 分析
+        prompt = f"""Analyze the following Chinese text and extract vocabulary words.
+
+CRITICAL REQUIREMENTS:
+1. Extract important Chinese words (nouns, verbs, adjectives, etc.)
+2. For EACH word provide:
+   - chinese: The Chinese word
+   - english: English translation (MUST BE ENGLISH, NOT CHINESE!)
+   - definition: English definition (MUST BE ENGLISH, NOT CHINESE!)
+   - example_chinese: Chinese example sentence
+   - example_english: English translation of example (MUST BE ENGLISH!)
+
+IMPORTANT: "english", "definition", and "example_english" MUST be in English language ONLY.
+
+Return ONLY a JSON array (no markdown, no explanation):
+[
+  {{
+    "chinese": "詞彙",
+    "english": "vocabulary",
+    "definition": "a body of words used in a particular language",
+    "example_chinese": "我在學習新的詞彙。",
+    "example_english": "I am learning new vocabulary."
+  }}
+]
+
+Extract 10-15 important words. Chinese text:
+{content}
+"""
+
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash-exp",
+            contents=prompt
+        )
+
+        words_json_str = response.text.strip()
 
         processing_status[process_id] = {
             'status': 'processing',
             'message': '正在解析分析結果...',
-            'progress': 80
+            'progress': 70
         }
 
-        # 解析JSON
+        # 解析JSON - 清理可能的 markdown 代碼塊標記
         cleaned_json = words_json_str.strip()
+        cleaned_json = cleaned_json.replace('```json', '').replace('```', '')
         start_idx = cleaned_json.find('[')
         end_idx = cleaned_json.rfind(']')
 
