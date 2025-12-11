@@ -547,12 +547,6 @@
                 <p data-i18n="settings_desc">{{ t.settings_desc }}</p>
             </div>
 
-            <div class="card" onclick="openActivitiesModal()">
-                <div class="card-icon">📊</div>
-                <h3 data-i18n="activities_title">{{ t.activities_title }}</h3>
-                <p data-i18n="activities_desc">{{ t.activities_desc }}</p>
-            </div>
-
             <div class="card" onclick="openHelpModal()">
                 <div class="card-icon">❓</div>
                 <h3 data-i18n="help_title">{{ t.help_title }}</h3>
@@ -563,14 +557,6 @@
         <div class="stats-section">
             <h2 data-i18n="stats_title">{{ t.stats_title }}</h2>
             <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-number" id="loginCount">-</div>
-                    <div class="stat-label" data-i18n="login_count">{{ t.login_count }}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="totalActivities">-</div>
-                    <div class="stat-label" data-i18n="total_activities">{{ t.total_activities }}</div>
-                </div>
                 <div class="stat-item">
                     <div class="stat-number" id="daysActive">-</div>
                     <div class="stat-label" data-i18n="days_active">{{ t.days_active }}</div>
@@ -690,21 +676,6 @@
                 <div style="margin-top: 25px;">
                     <button class="btn btn-primary" onclick="saveSettings()">儲存設定</button>
                     <button class="btn" onclick="closeModal('settingsModal')">取消</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 活動記錄模態視窗 -->
-    <div id="activitiesModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>📊 活動記錄</h2>
-                <span class="close" onclick="closeModal('activitiesModal')">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div id="activitiesList">
-                    <div class="loading">載入中...</div>
                 </div>
             </div>
         </div>
@@ -1017,8 +988,6 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    document.getElementById('loginCount').textContent = data.stats.login_count;
-                    document.getElementById('totalActivities').textContent = data.stats.total_activities;
                     document.getElementById('daysActive').textContent = data.stats.days_active;
                 }
             } catch (error) {
@@ -1208,73 +1177,6 @@
                 showMessage(translations.settings_save_failed || '儲存失敗,請重試', 'error');
             }
         }
-
-        // 開啟活動記錄
-        async function openActivitiesModal() {
-            openModal('activitiesModal');
-            const listDiv = document.getElementById('activitiesList');
-            listDiv.innerHTML = '<div class="loading">載入中...</div>';
-
-            try {
-                const response = await fetch('/api/user/activities');
-                const data = await response.json();
-
-                if (data.success) {
-                    if (data.activities.length === 0) {
-                        listDiv.innerHTML = '<p style="text-align: center; opacity: 0.7;">暫無活動記錄</p>';
-                    } else {
-                        listDiv.innerHTML = data.activities.map(activity => `
-                            <div class="activity-item">
-                                <div class="activity-header">
-                                    <span>${getActivityIcon(activity.type)} ${getActivityTypeName(activity.type)}</span>
-                                </div>
-                                <div class="activity-description">${activity.description}</div>
-                                <div class="activity-time">
-                                    ${new Date(activity.timestamp).toLocaleString('zh-TW')}
-                                    ${activity.ip_address ? ` · IP: ${activity.ip_address}` : ''}
-                                </div>
-                            </div>
-                        `).join('');
-                    }
-                } else {
-                    listDiv.innerHTML = '<p style="text-align: center; opacity: 0.7;">載入失敗</p>';
-                }
-            } catch (error) {
-                console.error('載入活動記錄失敗:', error);
-                listDiv.innerHTML = '<p style="text-align: center; opacity: 0.7;">載入失敗</p>';
-            }
-        }
-
-        // 活動類型圖示
-        function getActivityIcon(type) {
-            const icons = {
-                'login': '🔑',
-                'logout': '👋',
-                'profile_update': '✏️',
-                'password_change': '🔒',
-                'settings_update': '⚙️',
-                'korean_graph': '🇰🇷',
-                'chinese_graph': '🇨🇳',
-                'tts_generate': '🎙️'
-            };
-            return icons[type] || '📝';
-        }
-
-        // 活動類型名稱
-        function getActivityTypeName(type) {
-            const names = {
-                'login': '登入',
-                'logout': '登出',
-                'profile_update': '資料更新',
-                'password_change': '密碼修改',
-                'settings_update': '設定更新',
-                'korean_graph': '韓文圖譜',
-                'chinese_graph': '中文圖譜',
-                'tts_generate': 'TTS 生成'
-            };
-            return names[type] || '其他';
-        }
-
         // 開啟說明中心
         function openHelpModal() {
             openModal('helpModal');
