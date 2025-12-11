@@ -558,10 +558,6 @@
             <h2 data-i18n="stats_title">{{ t.stats_title }}</h2>
             <div class="stats-grid">
                 <div class="stat-item">
-                    <div class="stat-number" id="daysActive">-</div>
-                    <div class="stat-label" data-i18n="days_active">{{ t.days_active }}</div>
-                </div>
-                <div class="stat-item">
                     <div class="stat-number" id="currentTime">--:--</div>
                     <div class="stat-label" data-i18n="current_time">{{ t.current_time }}</div>
                 </div>
@@ -981,20 +977,6 @@
             document.getElementById('currentTime').textContent = timeString;
         }
 
-        // 載入統計數據
-        async function loadStats() {
-            try {
-                const response = await fetch('/api/user/stats');
-                const data = await response.json();
-
-                if (data.success) {
-                    document.getElementById('daysActive').textContent = data.stats.days_active;
-                }
-            } catch (error) {
-                console.error('載入統計失敗:', error);
-            }
-        }
-
         // 模態視窗控制
         function openModal(modalId) {
             document.getElementById(modalId).style.display = 'block';
@@ -1227,7 +1209,6 @@
         // 初始化
         updateTime();
         setInterval(updateTime, 1000);
-        loadStats();
         setInterval(checkAuth, 5 * 60 * 1000);
     </script>
 </body>
