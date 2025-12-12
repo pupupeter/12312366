@@ -732,3 +732,6 @@ Developed with assistance from Claude Code
 - [Railway Documentation](https://docs.railway.app/)
 - [Google Gemini API](https://ai.google.dev/)
 - [D3.js Documentation](https://d3js.org/)
+
+
+如果有要把個人資料跟系統設定弄回來 把COMMIT弄回到7ef8d562474186c6134f224895f8bb9ff1c28d19
