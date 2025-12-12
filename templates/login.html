@@ -55,8 +55,84 @@
             position: relative;
             z-index: 1;
             width: 100%;
-            max-width: 500px;
+            max-width: 1200px;
             padding: 20px;
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 968px) {
+            .main-wrapper {
+                flex-direction: column;
+            }
+            .features-section {
+                order: 2;
+            }
+            .login-section {
+                order: 1;
+            }
+        }
+
+        .features-section {
+            flex: 1;
+            color: white;
+        }
+
+        .login-section {
+            flex: 0 0 400px;
+        }
+
+        .features-header {
+            margin-bottom: 30px;
+        }
+
+        .features-header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .features-header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(10px);
+        }
+
+        .feature-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-card .icon {
+            font-size: 1.5em;
+        }
+
+        .feature-card p {
+            opacity: 0.9;
+            line-height: 1.5;
+            font-size: 0.95em;
         }
 
         .login-container {
@@ -243,6 +319,41 @@
     <div class="floating-text" style="top: 60%; left: -100%; animation-delay: 12s;">學習語言就是擁有另一個靈魂</div>
 
     <div class="main-wrapper">
+        <!-- 功能介紹區域 -->
+        <div class="features-section">
+            <div class="features-header">
+                <h1>🌏 語言學習平台</h1>
+                <p>運用 AI 技術，讓語言學習更智慧、更有趣</p>
+            </div>
+
+            <div class="feature-card">
+                <h3><span class="icon">📚</span> 中文詞彙分析</h3>
+                <p>輸入中文文本，自動分析詞彙級別（TOCFL 1-6 級），生成互動式知識圖譜，視覺化呈現詞彙關係。</p>
+            </div>
+
+            <div class="feature-card">
+                <h3><span class="icon">🇰🇷</span> 韓文詞彙分析</h3>
+                <p>分析韓文文本，識別單字、動詞變化與語法結構，搭配中文翻譯與例句，幫助你快速掌握韓語。</p>
+            </div>
+
+            <div class="feature-card">
+                <h3><span class="icon">🎙️</span> AI 語音合成 (TTS)</h3>
+                <p>支援中文、英文、韓文等多種語言的高品質語音合成，可調整語速、音調，下載 MP3 檔案。</p>
+            </div>
+
+            <div class="feature-card">
+                <h3><span class="icon">⭐</span> 單字收藏管理</h3>
+                <p>收藏重要單字，建立個人詞庫，隨時複習。支援中文、韓文雙語收藏。</p>
+            </div>
+
+            <div class="feature-card">
+                <h3><span class="icon">🎮</span> 互動學習遊戲</h3>
+                <p>打字遊戲、配對遊戲、聽力測驗，讓學習過程更有趣，透過遊戲加深記憶。</p>
+            </div>
+        </div>
+
+        <!-- 登錄區域 -->
+        <div class="login-section">
         <div class="login-container">
         <div class="login-header">
             <h1>🔐 用戶登入</h1>
@@ -275,10 +386,11 @@
         </div>
     </div>
 
-    <!-- 諺語區域 -->
-    <div class="quote-container">
-        <div class="quote-text" id="quoteText"></div>
-    </div>
+        <!-- 諺語區域 -->
+        <div class="quote-container">
+            <div class="quote-text" id="quoteText"></div>
+        </div>
+        </div>
     </div>
 
     <script>
