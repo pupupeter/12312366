@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打字遊戲 - 單字輸入挑戰</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #11998e;
+            font-size: 28px;
+        }
+
+        .header .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #11998e;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0d7a6f;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #11998e;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .language-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #11998e;
+            background: white;
+            color: #11998e;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .language-btn.active {
+            background: #11998e;
+            color: white;
+        }
+
+        .question-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+        }
+
+        .question-label {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .hint {
+            font-size: 16px;
+            opacity: 0.8;
+            font-style: italic;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        #answer-input {
+            width: 100%;
+            padding: 20px;
+            font-size: 24px;
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            transition: all 0.3s;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        #answer-input:focus {
+            outline: none;
+            border-color: #11998e;
+            box-shadow: 0 0 0 4px rgba(17, 153, 142, 0.1);
+        }
+
+        #answer-input.correct {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        #answer-input.incorrect {
+            border-color: #f44336;
+            background: #ffebee;
+            animation: shake 0.5s;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn-large {
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .feedback {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        .feedback.correct {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .feedback.incorrect {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+
+        .word-detail {
+            background: #f5f7fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .word-detail.show {
+            display: block;
+        }
+
+        .word-detail h3 {
+            color: #11998e;
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #666;
+            display: inline-block;
+            width: 100px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .complete-screen {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .complete-screen.show {
+            display: block;
+        }
+
+        .complete-screen h2 {
+            font-size: 48px;
+            color: #11998e;
+            margin-bottom: 30px;
+        }
+
+        .final-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .final-stat {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+        }
+
+        .final-stat-value {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .final-stat-label {
+            font-size: 18px;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: #11998e;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⌨️ 打字遊戲</h1>
+            <div class="controls">
+                <span>用戶: <strong>{{ username }}</strong></span>
+                <button class="btn btn-primary" onclick="startNewGame()">🔄 新遊戲</button>
+                <a href="/games" class="btn btn-secondary">← 返回選單</a>
+            </div>
+        </div>
+
+        <div class="game-container">
+            <div class="language-selector">
+                <button class="language-btn active" data-lang="korean" onclick="selectLanguage('korean')">
+                    🇰🇷 韓文打字
+                </button>
+                <button class="language-btn" data-lang="chinese" onclick="selectLanguage('chinese')">
+                    🇨🇳 中文打字
+                </button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="current-index">0</div>
+                    <div class="stat-label">當前題數</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="correct-count">0</div>
+                    <div class="stat-label">答對數</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="accuracy">100%</div>
+                    <div class="stat-label">正確率</div>
+                </div>
+                <div class="stat-card">
+                    <div class="timer" id="timer">00:00</div>
+                    <div class="stat-label">用時</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+
+            <div id="game-area">
+                <div class="loading">⏳ 載入單字中...</div>
+            </div>
+
+            <div id="complete-screen" class="complete-screen">
+                <h2>🎉 恭喜完成！</h2>
+                <div class="final-stats">
+                    <div class="final-stat">
+                        <div class="final-stat-value" id="final-correct">0</div>
+                        <div class="final-stat-label">答對題數</div>
+                    </div>
+                    <div class="final-stat">
+                        <div class="final-stat-value" id="final-accuracy">0%</div>
+                        <div class="final-stat-label">正確率</div>
+                    </div>
+                    <div class="final-stat">
+                        <div class="final-stat-value" id="final-time">00:00</div>
+                        <div class="final-stat-label">總用時</div>
+                    </div>
+                    <div class="final-stat">
+                        <div class="final-stat-value" id="final-wpm">0</div>
+                        <div class="final-stat-label">字/分鐘</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-large" onclick="startNewGame()">再玩一次</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let words = [];
+        let currentIndex = 0;
+        let correctCount = 0;
+        let totalAttempts = 0;
+        let currentWord = null;
+        let currentLanguage = 'korean';
+        let startTime = null;
+        let timerInterval = null;
+
+        // 選擇語言
+        function selectLanguage(lang) {
+            currentLanguage = lang;
+            document.querySelectorAll('.language-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            loadWords();
+        }
+
+        // 載入單字
+        async function loadWords() {
+            const gameArea = document.getElementById('game-area');
+            gameArea.innerHTML = '<div class="loading">⏳ 載入單字中...</div>';
+
+            try {
+                const endpoint = currentLanguage === 'korean'
+                    ? '/korean/api/saved-words'
+                    : '/chinese/api/saved-words';
+
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                words = data.words || [];
+
+                if (words.length === 0) {
+                    gameArea.innerHTML = `
+                        <div class="loading">
+                            📚 您還沒有收藏任何${currentLanguage === 'korean' ? '韓文' : '中文'}單字<br><br>
+                            <a href="${currentLanguage === 'korean' ? '/korean' : '/chinese'}"
+                               class="btn btn-primary btn-large">
+                                去收藏單字
+                            </a>
+                        </div>`;
+                    return;
+                }
+
+                startNewGame();
+            } catch (error) {
+                console.error('載入單字失敗:', error);
+                gameArea.innerHTML = '<div class="loading">❌ 載入單字失敗，請重新整理頁面</div>';
+            }
+        }
+
+        // 開始新遊戲
+        function startNewGame() {
+            if (words.length === 0) {
+                loadWords();
+                return;
+            }
+
+            // 重置遊戲狀態
+            currentIndex = 0;
+            correctCount = 0;
+            totalAttempts = 0;
+            startTime = Date.now();
+
+            // 打亂單字順序
+            words.sort(() => Math.random() - 0.5);
+
+            // 隱藏完成畫面
+            document.getElementById('complete-screen').classList.remove('show');
+
+            // 更新統計
+            updateStats();
+
+            // 開始計時
+            startTimer();
+
+            // 顯示第一題
+            showQuestion();
+        }
+
+        // 開始計時
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('timer').textContent =
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        // 顯示問題
+        function showQuestion() {
+            if (currentIndex >= words.length) {
+                finishGame();
+                return;
+            }
+
+            currentWord = words[currentIndex];
+            const gameArea = document.getElementById('game-area');
+
+            const questionText = currentLanguage === 'korean'
+                ? currentWord.chinese
+                : currentWord.chinese;
+
+            const hintText = currentLanguage === 'korean'
+                ? currentWord.definition
+                : currentWord.definition;
+
+            gameArea.innerHTML = `
+                <div class="question-card">
+                    <div class="question-label">請輸入對應的${currentLanguage === 'korean' ? '韓文' : '中文'}單字</div>
+                    <div class="question-text">${questionText}</div>
+                    <div class="hint">提示: ${hintText}</div>
+                </div>
+
+                <div class="input-section">
+                    <div class="input-wrapper">
+                        <input type="text"
+                               id="answer-input"
+                               placeholder="在此輸入答案..."
+                               autocomplete="off"
+                               autofocus>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary btn-large" onclick="checkAnswer()">
+                        ✓ 提交答案
+                    </button>
+                    <button class="btn btn-secondary btn-large" onclick="skipQuestion()">
+                        → 跳過
+                    </button>
+                </div>
+
+                <div id="feedback" class="feedback"></div>
+                <div id="word-detail" class="word-detail"></div>
+            `;
+
+            // 綁定 Enter 鍵
+            document.getElementById('answer-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkAnswer();
+                }
+            });
+
+            // 更新進度
+            updateProgress();
+        }
+
+        // 檢查答案
+        function checkAnswer() {
+            const input = document.getElementById('answer-input');
+            const userAnswer = input.value.trim();
+
+            if (!userAnswer) {
+                input.focus();
+                return;
+            }
+
+            totalAttempts++;
+
+            const correctAnswer = currentLanguage === 'korean'
+                ? currentWord.korean
+                : currentWord.chinese;
+
+            const isCorrect = userAnswer === correctAnswer;
+
+            if (isCorrect) {
+                correctCount++;
+                input.classList.add('correct');
+                showFeedback('✅ 正確！答對了！', 'correct');
+            } else {
+                input.classList.add('incorrect');
+                showFeedback(`❌ 錯誤！正確答案是: ${correctAnswer}`, 'incorrect');
+            }
+
+            // 顯示單字詳情
+            showWordDetail();
+
+            // 更新統計
+            updateStats();
+
+            // 禁用輸入
+            input.disabled = true;
+
+            // 2秒後下一題
+            setTimeout(() => {
+                nextQuestion();
+            }, 2500);
+        }
+
+        // 顯示反饋
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback ${type} show`;
+        }
+
+        // 顯示單字詳情
+        function showWordDetail() {
+            const detail = document.getElementById('word-detail');
+            const exampleLabel = currentLanguage === 'korean' ? '例句(韓)' : '例句';
+            const exampleContent = currentLanguage === 'korean'
+                ? currentWord.example_korean
+                : currentWord.example_chinese;
+            const exampleTransLabel = currentLanguage === 'korean' ? '例句(中)' : '翻譯';
+            const exampleTransContent = currentLanguage === 'korean'
+                ? currentWord.example_chinese
+                : currentWord.example_english || currentWord.definition;
+
+            detail.innerHTML = `
+                <h3>📖 單字詳情</h3>
+                <div class="detail-row">
+                    <span class="detail-label">${currentLanguage === 'korean' ? '韓文' : '中文'}:</span>
+                    ${currentLanguage === 'korean' ? currentWord.korean : currentWord.chinese}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">翻譯:</span>
+                    ${currentLanguage === 'korean' ? currentWord.chinese : currentWord.definition}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">釋義:</span>
+                    ${currentWord.definition}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">${exampleLabel}:</span>
+                    ${exampleContent || '無'}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">${exampleTransLabel}:</span>
+                    ${exampleTransContent || '無'}
+                </div>
+            `;
+            detail.classList.add('show');
+        }
+
+        // 跳過問題
+        function skipQuestion() {
+            totalAttempts++;
+            const correctAnswer = currentLanguage === 'korean'
+                ? currentWord.korean
+                : currentWord.chinese;
+
+            showFeedback(`⏭️ 已跳過。正確答案是: ${correctAnswer}`, 'incorrect');
+            showWordDetail();
+            updateStats();
+
+            setTimeout(() => {
+                nextQuestion();
+            }, 2500);
+        }
+
+        // 下一題
+        function nextQuestion() {
+            currentIndex++;
+            showQuestion();
+        }
+
+        // 更新統計
+        function updateStats() {
+            document.getElementById('current-index').textContent = `${currentIndex + 1}/${words.length}`;
+            document.getElementById('correct-count').textContent = correctCount;
+
+            const accuracy = totalAttempts > 0
+                ? Math.round((correctCount / totalAttempts) * 100)
+                : 100;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+        }
+
+        // 更新進度條
+        function updateProgress() {
+            const progress = ((currentIndex) / words.length) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+        }
+
+        // 完成遊戲
+        function finishGame() {
+            clearInterval(timerInterval);
+
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            const accuracy = totalAttempts > 0
+                ? Math.round((correctCount / totalAttempts) * 100)
+                : 100;
+
+            // 計算每分鐘字數
+            const wpm = elapsed > 0 ? Math.round((correctCount / elapsed) * 60) : 0;
+
+            // 顯示完成畫面
+            document.getElementById('game-area').style.display = 'none';
+            const completeScreen = document.getElementById('complete-screen');
+            completeScreen.classList.add('show');
+
+            document.getElementById('final-correct').textContent = `${correctCount}/${words.length}`;
+            document.getElementById('final-accuracy').textContent = accuracy + '%';
+            document.getElementById('final-time').textContent = timeStr;
+            document.getElementById('final-wpm').textContent = wpm;
+
+            // 重置進度條
+            document.getElementById('progress-fill').style.width = '100%';
+        }
+
+        // 頁面載入時開始遊戲
+        window.onload = () => {
+            loadWords();
+        };
+    </script>
+</body>
+</html>

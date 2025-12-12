@@ -244,6 +244,57 @@
         .level-text {
             font-size: 14px;
         }
+
+        .input-mode-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 25px;
+            font-size: 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: #ffeb3b;
+            box-shadow: 0 0 15px rgba(255, 235, 59, 0.3);
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin-bottom: 20px;
+            min-height: 150px;
+            resize: vertical;
+            font-family: 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
+        }
+
+        .text-input:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -253,13 +304,26 @@
             <p>Transform Chinese articles into interactive vocabulary learning networks</p>
             <p>Automatic vocabulary level annotation (Basic/Advanced)</p>
             <div style="margin-top: 20px;">
-                <a href="/review" class="result-btn" style="text-decoration: none;">📚 我的收藏 My Collection</a>
+                <a href="javascript:void(0)" id="reviewLink" class="result-btn" style="text-decoration: none;" onclick="goToReview()">📚 我的收藏 My Collection</a>
             </div>
         </div>
 
         <div class="input-group">
-            <label for="newsUrl">Enter Chinese Article URL:</label>
-            <input type="url" id="newsUrl" class="url-input" placeholder="e.g., https://www.bbc.com/zhongwen/..." />
+            <div class="input-mode-toggle">
+                <button class="mode-btn active" id="urlModeBtn" onclick="switchMode('url')">🌐 網址輸入</button>
+                <button class="mode-btn" id="textModeBtn" onclick="switchMode('text')">📝 純文字輸入</button>
+            </div>
+
+            <div id="urlInputGroup">
+                <label for="newsUrl">Enter Chinese Article URL:</label>
+                <input type="url" id="newsUrl" class="url-input" placeholder="e.g., https://www.bbc.com/zhongwen/..." />
+            </div>
+
+            <div id="textInputGroup" class="hidden">
+                <label for="newsText">請貼上中文內容：</label>
+                <textarea id="newsText" class="text-input" placeholder="請貼上您想分析的中文內容...&#10;例如：新聞、文章、對話等"></textarea>
+            </div>
+
             <button id="processBtn" class="process-btn">Start Analysis</button>
         </div>
 
@@ -351,13 +415,51 @@
     <script>
         let currentProcessId = null;
         let statusCheckInterval = null;
+        let currentMode = 'url'; // 'url' or 'text'
+
+        // 檢測當前路徑,自動適應代理環境
+        function getBasePath() {
+            const path = window.location.pathname;
+            if (path.startsWith('/chinese-app')) {
+                return '/chinese-app';
+            } else if (path.startsWith('/chinese')) {
+                return '/chinese';
+            }
+            return '';
+        }
+
+        function goToReview() {
+            const basePath = getBasePath();
+            const reviewUrl = basePath + '/review';
+            console.log('Navigating to review:', reviewUrl);
+            window.location.href = reviewUrl;
+        }
 
         function setUrl(url) {
+            // 自動切換到 URL 模式
+            switchMode('url');
             document.getElementById('newsUrl').value = url;
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+
+            if (mode === 'url') {
+                document.getElementById('urlInputGroup').classList.remove('hidden');
+                document.getElementById('textInputGroup').classList.add('hidden');
+                document.getElementById('urlModeBtn').classList.add('active');
+                document.getElementById('textModeBtn').classList.remove('active');
+            } else {
+                document.getElementById('urlInputGroup').classList.add('hidden');
+                document.getElementById('textInputGroup').classList.remove('hidden');
+                document.getElementById('urlModeBtn').classList.remove('active');
+                document.getElementById('textModeBtn').classList.add('active');
+            }
         }
 
         function resetForm() {
             document.getElementById('newsUrl').value = '';
+            document.getElementById('newsText').value = '';
             document.getElementById('statusContainer').style.display = 'none';
             document.getElementById('processBtn').disabled = false;
             document.getElementById('processBtn').textContent = 'Start Analysis';
@@ -380,7 +482,7 @@
         }
 
         function checkStatus(processId) {
-            fetch(`/status/${processId}`)
+            fetch(`/chinese/status/${processId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'processing') {
@@ -389,7 +491,7 @@
                         updateProgress(100, `✅ ${data.message}`);
 
                         // 顯示結果按鈕
-                        document.getElementById('viewGraphBtn').href = `/result/${data.filename}`;
+                        document.getElementById('viewGraphBtn').href = `/chinese/result/${data.filename}`;
                         document.getElementById('resultContainer').style.display = 'block';
 
                         // 停止狀態檢查
@@ -428,11 +530,24 @@
         }
 
         document.getElementById('processBtn').addEventListener('click', function() {
-            const url = document.getElementById('newsUrl').value.trim();
+            let url = '';
+            let text = '';
+            let requestBody = {};
 
-            if (!url) {
-                showError('Please enter a valid URL');
-                return;
+            if (currentMode === 'url') {
+                url = document.getElementById('newsUrl').value.trim();
+                if (!url) {
+                    showError('Please enter a valid URL');
+                    return;
+                }
+                requestBody = { url: url, type: 'url' };
+            } else {
+                text = document.getElementById('newsText').value.trim();
+                if (!text) {
+                    showError('請貼上要分析的中文內容 / Please paste Chinese content');
+                    return;
+                }
+                requestBody = { text: text, type: 'text' };
             }
 
             // 重置之前的結果
@@ -445,12 +560,12 @@
             this.textContent = 'Processing...';
 
             // 發送處理請求
-            fetch('/process', {
+            fetch('/chinese/process', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ url: url })
+                body: JSON.stringify(requestBody)
             })
             .then(response => response.json())
             .then(data => {
@@ -476,7 +591,7 @@
             });
         });
 
-        // Allow Enter key submission
+        // Allow Enter key submission (URL mode only)
         document.getElementById('newsUrl').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 document.getElementById('processBtn').click();
@@ -485,4 +600,3 @@
     </script>
 </body>
 </html>
-

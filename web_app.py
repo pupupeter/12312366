@@ -8,33 +8,30 @@ from markdownify import markdownify
 import threading
 import time
 from datetime import datetime
+import urllib.parse  # 用於解碼 URL 編碼的用戶名
+
+# 導入 Supabase 工具函數
+from supabase_utils import (
+    get_korean_words,
+    add_korean_word,
+    delete_korean_word
+)
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False  # 確保 JSON 回應正確處理中文
 
-# 收藏單字的存儲文件
-SAVED_WORDS_FILE = 'saved_words.json'
-
-# 初始化收藏文件
-def init_saved_words():
-    if not os.path.exists(SAVED_WORDS_FILE):
-        with open(SAVED_WORDS_FILE, 'w', encoding='utf-8') as f:
-            json.dump([], f, ensure_ascii=False)
-
-# 讀取收藏的單字
-def load_saved_words():
-    try:
-        with open(SAVED_WORDS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
-        return []
-
-# 保存收藏的單字
-def save_words_to_file(words):
-    with open(SAVED_WORDS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(words, f, ensure_ascii=False, indent=2)
-
-init_saved_words()
+# 輔助函數：從 request headers 獲取 user_id
+def get_user_id_from_headers():
+    """從代理傳遞的 headers 中獲取 user_id"""
+    user_id = request.headers.get('X-User-ID', '')
+    if not user_id:
+        # 如果沒有 user_id，使用 username 作為備用
+        username = request.headers.get('X-Username', '')
+        if username:
+            user_id = urllib.parse.unquote(username)
+        else:
+            user_id = 'default_user'  # 默認用戶
+    return user_id
 
 # 自訂抓取網頁內容工具
 class VisitWebpageTool(Tool):
@@ -572,12 +569,11 @@ def index():
 def process_url():
     data = request.json
     url = data.get('url')
+    text = data.get('text')
+    input_type = data.get('type', 'url')  # 'url' or 'text'
 
-    if not url:
-        return jsonify({'error': '請提供網址'}), 400
-
-    if not url.startswith('http'):
-        url = 'https://' + url
+    if not url and not text:
+        return jsonify({'error': '請提供網址或純文字'}), 400
 
     # 生成唯一的處理ID
     process_id = str(int(time.time() * 1000))
@@ -588,7 +584,12 @@ def process_url():
     }
 
     # 在背景執行處理
-    thread = threading.Thread(target=process_korean_analysis, args=(url, process_id))
+    if input_type == 'text' and text:
+        thread = threading.Thread(target=process_text_analysis, args=(text, process_id))
+    else:
+        if not url.startswith('http'):
+            url = 'https://' + url
+        thread = threading.Thread(target=process_korean_analysis, args=(url, process_id))
     thread.start()
 
     return jsonify({'process_id': process_id})
@@ -608,45 +609,101 @@ def get_result(filename):
 # API: 獲取所有收藏的單字
 @app.route('/api/saved-words', methods=['GET'])
 def get_saved_words():
-    words = load_saved_words()
+    user_id = get_user_id_from_headers()
+    words = get_korean_words(user_id)
     return jsonify({'words': words})
 
 # API: 添加單字到收藏
 @app.route('/api/saved-words', methods=['POST'])
 def add_saved_word():
+    user_id = get_user_id_from_headers()
     data = request.json
     word = data.get('word')
 
     if not word:
         return jsonify({'error': '單字資料不完整'}), 400
 
-    words = load_saved_words()
-
-    # 檢查是否已存在（根據韓文詞彙判斷）
-    korean = word.get('korean', '')
-    if any(w.get('korean') == korean for w in words):
-        return jsonify({'message': '單字已存在於收藏中', 'exists': True})
-
-    # 添加時間戳記
-    word['saved_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    words.append(word)
-    save_words_to_file(words)
-
-    return jsonify({'message': '單字已收藏', 'exists': False})
+    result = add_korean_word(user_id, word)
+    return jsonify(result)
 
 # API: 刪除收藏的單字
 @app.route('/api/saved-words/<korean>', methods=['DELETE'])
 def delete_saved_word(korean):
-    words = load_saved_words()
-    # 過濾掉要刪除的單字
-    words = [w for w in words if w.get('korean') != korean]
-    save_words_to_file(words)
-    return jsonify({'message': '單字已移除'})
+    user_id = get_user_id_from_headers()
+    result = delete_korean_word(user_id, korean)
+    return jsonify(result)
 
 # 複習頁面
 @app.route('/review')
 def review():
     return render_template('review.html')
+
+def process_text_analysis(text, process_id):
+    """處理純文字輸入的韓文分析"""
+    try:
+        processing_status[process_id] = {
+            'status': 'processing',
+            'message': '正在初始化AI模型...',
+            'progress': 10
+        }
+
+        model = LiteLLMModel(model_id="gemini/gemini-2.0-flash", token=os.getenv("GEMINI_API_KEY"))
+        korean_tool = KoreanWordAnalysisTool(model=model)
+
+        processing_status[process_id] = {
+            'status': 'processing',
+            'message': '正在進行韓文詞彙分析...',
+            'progress': 40
+        }
+
+        # 限制文字長度
+        content = text[:10000]
+        words_json_str = korean_tool.forward(content)
+
+        processing_status[process_id] = {
+            'status': 'processing',
+            'message': '正在解析分析結果...',
+            'progress': 70
+        }
+
+        # 解析JSON
+        cleaned_json = words_json_str.strip()
+        start_idx = cleaned_json.find('[')
+        end_idx = cleaned_json.rfind(']')
+
+        if start_idx != -1 and end_idx != -1:
+            json_part = cleaned_json[start_idx:end_idx+1]
+            words = json.loads(json_part)
+
+            processing_status[process_id] = {
+                'status': 'processing',
+                'message': '正在生成知識圖譜...',
+                'progress': 90
+            }
+
+            # 生成HTML文件
+            html_content = generate_graph_html(words, "純文字輸入 | Text Input")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"korean_graph_{len(words)}words_{timestamp}.html"
+
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+
+            processing_status[process_id] = {
+                'status': 'completed',
+                'message': f'成功生成 {len(words)} 個韓文詞彙的知識圖譜',
+                'progress': 100,
+                'filename': filename,
+                'word_count': len(words)
+            }
+        else:
+            raise ValueError("無法找到有效的JSON數組")
+
+    except Exception as e:
+        processing_status[process_id] = {
+            'status': 'error',
+            'message': f'處理失敗: {str(e)}'
+        }
 
 def process_korean_analysis(url, process_id):
     try:
