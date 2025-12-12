@@ -362,7 +362,7 @@ def generate_graph_html(words_data, url):
     </div>
 
     <div class="header">
-        <h1>🇨🇳 中文詞彙知識圖譜 | Chinese Vocabulary Knowledge Graph</h1>
+        <h1>📚 中文詞彙知識圖譜 | Chinese Vocabulary Knowledge Graph</h1>
         <p>互動式詞彙學習網絡 - Interactive Vocabulary Learning Network</p>
     </div>
 
