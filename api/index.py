@@ -140,7 +140,7 @@ Generate the conversation in this exact format:
 
 Only output the conversation, nothing else. Remember: ALL dialogue must be {lang_instruction}."""
 
-        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+        response = client.models.generate_content(model="gemini-3.8-flash", contents=prompt)
         return response.text.strip()
     except Exception as e:
         raise Exception(f"Failed to generate conversation: {str(e)}")
