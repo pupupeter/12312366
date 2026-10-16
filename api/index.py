@@ -10,6 +10,7 @@ from datetime import datetime
 import requests
 import io
 import wave
+import time
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 
@@ -105,6 +106,23 @@ def fetch_webpage(url):
     except Exception as e:
         raise Exception(f"Failed to fetch webpage: {str(e)}")
 
+TEXT_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]
+TTS_MODELS = ["gemini-3.8-flash-lite-tts", "gemini-3.8-flash-tts"]
+
+def generate_with_fallback(client, models, **kwargs):
+    """依序嘗試模型；遇到 503/429（模型忙碌）時重試一次後改用下一個模型"""
+    last_error = None
+    for model in models:
+        for attempt in range(2):
+            try:
+                return client.models.generate_content(model=model, **kwargs)
+            except Exception as e:
+                last_error = e
+                if not any(code in str(e) for code in ('503', 'UNAVAILABLE', '429', 'RESOURCE_EXHAUSTED')):
+                    raise
+                time.sleep(1 + attempt)
+    raise last_error
+
 def generate_conversation_from_content(client, content, speaker1_name, speaker2_name, language_code='en'):
     try:
         language_instructions = {
@@ -140,7 +158,7 @@ Generate the conversation in this exact format:
 
 Only output the conversation, nothing else. Remember: ALL dialogue must be {lang_instruction}."""
 
-        response = client.models.generate_content(model="gemini-3.8-flash", contents=prompt)
+        response = generate_with_fallback(client, TEXT_MODELS, contents=prompt)
         return response.text.strip()
     except Exception as e:
         raise Exception(f"Failed to generate conversation: {str(e)}")
@@ -321,8 +339,9 @@ def tts_generate_from_url():
 
         prompt = f"TTS the following conversation between {speaker1_name} and {speaker2_name}:\n{conversation}"
 
-        response = client.models.generate_content(
-            model=model,
+        response = generate_with_fallback(
+            client,
+            [model] + [m for m in TTS_MODELS if m != model],
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO"],
@@ -395,8 +414,9 @@ def tts_generate_manual():
         client = genai.Client(api_key=api_key)
         prompt = f"TTS the following conversation between {speaker1_name} and {speaker2_name}:\n{conversation}"
 
-        response = client.models.generate_content(
-            model=model,
+        response = generate_with_fallback(
+            client,
+            [model] + [m for m in TTS_MODELS if m != model],
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO"],
