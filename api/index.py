@@ -308,7 +308,7 @@ def tts_generate_from_url():
         speaker1_voice = data.get('speaker1_voice', 'Kore')
         speaker2_voice = data.get('speaker2_voice', 'Puck')
         language_code = data.get('language', 'en')
-        model = data.get('model', 'gemini-2.5-flash-preview-tts')
+        model = data.get('model', 'gemini-3.8-flash-lite-tts')
 
         if not url or not api_key:
             return jsonify({'error': '缺少必要參數'}), 400
@@ -387,7 +387,7 @@ def tts_generate_manual():
         speaker2_name = data.get('speaker2_name', 'Jane')
         speaker1_voice = data.get('speaker1_voice', 'Kore')
         speaker2_voice = data.get('speaker2_voice', 'Puck')
-        model = data.get('model', 'gemini-2.5-flash-preview-tts')
+        model = data.get('model', 'gemini-3.8-flash-lite-tts')
 
         if not conversation or not api_key:
             return jsonify({'error': '缺少必要參數'}), 400
